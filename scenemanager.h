@@ -2,7 +2,6 @@
 #define SCENEMANAGER_H
 #include <QVector>
 #include "scene.h"
-
 class SceneManager
 {
 public:
@@ -13,7 +12,5 @@ public:
 private:
     QVector<Scene*> scenes;
     Scene* active;
-
 };
-
 #endif // SCENEMANAGER_H

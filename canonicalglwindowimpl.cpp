@@ -1,16 +1,13 @@
-#include <QCoreApplication>
 #include "canonicalglwindowimpl.h"
 #include "scene.h"
+#include <QCoreApplication>
 #include <fstream>
+
 CanonicalGLWindowImpl::CanonicalGLWindowImpl()
 {
-
 }
 
-
-
 void CanonicalGLWindowImpl::initializeGL() {
-
     initializeOpenGLFunctions();
     QString vertexShaderPath = ":/vertex.glsl";
     QString fragmentShaderPath = ":/fragment.glsl";
@@ -41,10 +38,9 @@ void CanonicalGLWindowImpl::initializeGL() {
                 0.3f,           // near clipping plane
                 10000.0f);       // far clipping plane
 
-
+    //will be modified later
     glEnable(GL_DEPTH_TEST);
     glClearColor(.9f, .9f, .93f ,1.0f);
-
 
     //load model
     std::ifstream in("scenelocation");
@@ -68,7 +64,6 @@ void CanonicalGLWindowImpl::initializeGL() {
 
 void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     glViewport( 0, 0, w, h );
-
     projection.setToIdentity();
     projection.perspective(60.0f, (float)w/h, 0.3f, 10000);
 }
@@ -76,25 +71,11 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
 void CanonicalGLWindowImpl::paintGL() {
     // Clear color and depth buffers
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    GLenum err = glGetError();
-    while ( err != GL_NO_ERROR) {
-        qDebug() << "gl error " << err;
-        err = glGetError();
-    }
-
-    //shaderProgram.bind();
-    //manager.getActive()->bind(&shaderProgram);
-    //scene->bind(&shaderProgram);
-
     scene->draw(&shaderProgram,view,projection);
-
     handleCursor(&view);
-
+    //trigger an update so that this function gets called the next frame again
     QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
 }
-
-
 
 void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
 
@@ -104,8 +85,6 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
     viewAngles[0] = ( (int)viewAngles[0] % 360);
     viewAngles[1] += mousey;
     viewAngles[1] = ( (int)viewAngles[1] % 360);
-
-
 
     QVector3D up = QVector3D(0.0f,1.0f,0.0f);
     QVector3D forward = QVector3D(0.0f,0.0f,-1.0f);
@@ -117,22 +96,20 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
     QQuaternion qx = QQuaternion::fromAxisAndAngle(right, -viewAngles[1]);
     forward = qx.rotatedVector(forward);        //new forward vector
     up = qx.rotatedVector(up);        //new up vector
-
+    //move the camera
     cameraPosition += moveDir.z() * forward;
     cameraPosition += moveDir.x() * right;
 
     affect->setToIdentity();
     affect->lookAt(cameraPosition,cameraPosition + forward,up);
 
-    QCursor::setPos(x() +  width() / 2,y() + height() / 2);
-
+    QCursor::setPos(x() +  width() / 2,y() + height() / 2); //reset the cursor to center of screen
     lastCursorPos[0] = QCursor::pos().x();
     lastCursorPos[1] = QCursor::pos().y();
 }
 
 void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
-    float tspeed = 4.1f;
-
+    float tspeed = 4.1f;//hardcoded movement speed
     QVector3D t = QVector3D(0.0f,0.0f,0.0f);
     switch(ev->key()) {
         case Qt::Key_W:
@@ -150,14 +127,11 @@ void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
         default:
         break;
     }
-
     moveDir += t * tspeed;
-
 }
 
 void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
     float tspeed = 4.1f;
-
     QVector3D t = QVector3D(0.0f,0.0f,0.0f);
     switch(ev->key()) {
         case Qt::Key_W:
@@ -175,6 +149,5 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         default:
         break;
     }
-
     moveDir -= t * tspeed;
 }

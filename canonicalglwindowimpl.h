@@ -9,13 +9,14 @@ class CanonicalGLWindowImpl : public QOpenGLWindow, protected QOpenGLFunctions
 {
 public:
     CanonicalGLWindowImpl();
-
-    //both affect the view matrix with translations
+    //both affect the view matrix with translations for movement
     void keyPressEvent(QKeyEvent *ev) override;
     void keyReleaseEvent(QKeyEvent *ev) override;
-
 protected:
+    //
     void paintGL() ;
+    //initializes opengl and loads shaders and loads the scene file according to the file "scenelocation" which should be
+    //located in the execution directoy
     void initializeGL() ;
     void resizeGL(int w, int h) ;
 private:
@@ -23,18 +24,14 @@ private:
     QOpenGLShaderProgram shaderProgram;
     QMatrix4x4 view;
     QMatrix4x4 projection;
-
     //camera movement
     QVector3D cameraPosition;
     QVector3D moveDir; //Vector that shows into the world coordinate direction (depending to wasd keys), where to move the camera
-    int* lastCursorPos;
+    int* lastCursorPos;//member to calculate the mouse movement since last frame
     float* viewAngles; //x-axis and y-axis angles in degrees
-
+    //the scene to be rendered
     Scene* scene;
 
-
     void handleCursor(QMatrix4x4* affect);//translates cursor movement into view matrix updates
-
 };
-
 #endif // CANONICALGLWINDOWIMPL_H

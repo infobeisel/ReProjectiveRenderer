@@ -4,6 +4,7 @@ SceneManager::SceneManager()
 {
 
 }
+
 void SceneManager::loadScene(Scene* s) {
     if(!scenes.contains(s)) {
         scenes.push_back(s);

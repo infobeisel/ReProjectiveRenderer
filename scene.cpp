@@ -18,7 +18,6 @@ Scene::~Scene()
     normalBufferObject.destroy();
     textureUVBufferObject.destroy();
     indexBufferObject.destroy();
-    gl->glDeleteTextures(1,&textureArray);
     s->~aiScene();
 }
 
@@ -61,6 +60,7 @@ void Scene::load() {
                     if(mesh->HasTextureCoords(0)) {
                         //assuming only one uv channel (one set of uv coordinates)
                         aiVector3D &uv = mesh->mTextureCoords[0][j];
+                        //qDebug() << uv.x << " " << uv.y;
                         textureUVs.push_back(uv.x);
                         textureUVs.push_back(uv.y);
                     } else {
@@ -108,14 +108,8 @@ void Scene::load() {
     indexBufferObject.setUsagePattern( QOpenGLBuffer::StaticDraw );
     indexBufferObject.bind();
     indexBufferObject.allocate( &indices[0], indices.size() * sizeof( unsigned int ) );
-    //now load the textures. Material parameters can be read directly while drawing when traversing the node tree
-    //go through the materials to gather all textures in an array. also store the index
-    QVector<QImage*> textures;
-    int index = 0;
-    //hold the max width and height of textures for allocation.
-    //NOTE will result in unused allocated memory if different resolutions are used (quite likely to happen)
-    int maxwidth = 0;
-    int maxheight = 0;
+
+    //now load the images. Material parameters can be read directly while drawing when traversing the node tree
     for(uint i = 0; i < s->mNumMaterials; i++) {
         aiMaterial* mat = s->mMaterials[i];
         //support ambient, diffuse and specular texture, as well as dissolve mask and normal map. TODO dissolve map type could not be found
@@ -131,56 +125,16 @@ void Scene::load() {
                 QImage* img = new QImage(basePath +  texturePath);
                 QImage* mirrored = new QImage(img->width(),img->height(),img->format());
                 (*mirrored) = img->mirrored();
-                //if not already allocated
-                if(texturePathToArrayIndex.find(texturePath) == texturePathToArrayIndex.end())
-                {
-                    textures.push_back(mirrored); //add the image to image array
-                    texturePathToArrayIndex[texturePath] = index; //save index
-                    int t_w = mirrored->width();
-                    int t_h =   mirrored->height();
-                    maxwidth = maxwidth < t_w ? t_w : maxwidth;
-                    maxheight = maxheight < t_h ? t_h : maxheight;
-                    index++;
-                }
+                //add to manager
+                textureManager.addImage(texturePath,mirrored);
             }
         }
     }
-    //now all available textures can be accessed in the textures array in format QImage.
-    //now set up the opengl server-side texture array
-    //the mapping from material name to index in opengl texture array is stored in the texturePathToArrayIndex
-    //qDebug() << "creating OpenGl texture array with " << textures.size() << " textures of size " << maxwidth << "x" << maxheight;
-    gl->glGenTextures(1,&textureArray);
-    gl->glActiveTexture(GL_TEXTURE0);
-    gl->glBindTexture(GL_TEXTURE_2D_ARRAY,textureArray);
-    //TODO (*) is this safe ? its a datastructure but does allocate memory (like the buffer objects) and is not accessed via gl-> nor via a Qt Wrapper Class
-    glTexImage3D (GL_TEXTURE_2D_ARRAY, 0,  GL_RGBA , maxwidth, maxheight,
-        textures.size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    texRes = new int[2];
-    texRes[0] = maxwidth;
-    texRes[1] = maxheight;
-    for(int imgi = 0; imgi<textures.size(); imgi++) { //add each texture to the texture array
-        GLenum t_target = GL_TEXTURE_2D_ARRAY;
-        //https://www.opengl->org/sdk/docs/man2/xhtml/glTexSubImage3D.xml
-        /*
-         * insert the layer in zoffset (5th param) and not in depth (8th param, insert 1 there).
-         * zoffset means layer, depth (probably) means mip map level(?)
-         * */
-        //TODO (*)
-        glTexSubImage3D(t_target,
-                        0,
-                        0,0,imgi,
-                        textures[imgi]->width(),textures[imgi]->height(),1,
-                        GL_RGBA,         // format
-                        GL_UNSIGNED_BYTE, // type
-                        textures[imgi]->bits());
-        gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-        gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-        gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-        gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-    }
-    gl->glBindTexture(GL_TEXTURE_2D_ARRAY, 0); //unbind
+    textureManager.loadToServer(gl);
+
     vertexArrayObject.release();
 }
+
 
 void Scene::bind(QOpenGLShaderProgram *toProgram) {
     vertexArrayObject.bind();
@@ -202,9 +156,7 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
         toProgram->setAttributeBuffer( 2,GL_FLOAT,0,2);
     }
     indexBufferObject.bind();
-    gl->glActiveTexture(GL_TEXTURE0);
-    gl->glBindTexture(GL_TEXTURE_2D_ARRAY,textureArray);
-    toProgram->setUniformValue( "tex", 0 );
+
     vertexArrayObject.release();
 }
 
@@ -243,6 +195,23 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             withProgram->setUniformValue("Ka",QVector3D(ka.x,ka.y,ka.z));
             withProgram->setUniformValue("Kd",QVector3D(kd.x,kd.y,kd.z));
             withProgram->setUniformValue("Ks",QVector3D(ks.x,ks.y,ks.z));
+            //set texture parameters
+            //diffuse texture (sampler is already set up
+            if((mat->GetTextureCount(aiTextureType_DIFFUSE) > 0)) {
+                aiString tpath;
+                if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                    QString qtpath = tpath.data;
+                    ClientTextureArray* array = textureManager.getTextureArray(qtpath);
+                    ClientTexture* tex = array->getTexture(qtpath);
+                    gl->glActiveTexture(array->getTextureUnitIndex());
+                    gl->glBindTexture(GL_TEXTURE_2D_ARRAY,array->getServerTextureName());
+                    withProgram->setUniformValue( "tex", array->getTextureUnitIndex() - GL_TEXTURE0 ); //has to be 0 or 1 or ...
+                    withProgram->setUniformValue("textureArrayIndex",(float)tex->getIndex()); //index for the texture array
+                }
+            } else
+                withProgram->setUniformValue("textureArrayIndex",-1.0f); //index for the texture array
+
+
             //assume triangles
             int count = mesh->mNumFaces * 3; //faces are triangles (assumption)
             gl->glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_INT,(const void*)(indexOffsetCounter * sizeof(unsigned int)) );

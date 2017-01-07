@@ -1,5 +1,6 @@
 #ifndef SCENE_H
 #define SCENE_H
+#include "clienttexturearraymanager.h"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
@@ -26,11 +27,8 @@ private:
     QOpenGLBuffer indexBufferObject;
     QString name; //name of the scene file
     QString basePath; //path to the scene file
-    //for the sake of simplicity all textures are kept in one texture array, all textures in the array have resolution texRes
-    GLuint textureArray;
-    int* texRes;
-    //holds the index for the server side texture array, depending on the texture name(path)
-    QMap<QString, int> texturePathToArrayIndex;
+
+    ClientTextureArrayManager textureManager;
     //the importer object and the scene from assimp
     const aiScene* s;
     Assimp::Importer importer;

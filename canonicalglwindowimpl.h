@@ -9,6 +9,7 @@ class CanonicalGLWindowImpl : public QOpenGLWindow, protected QOpenGLFunctions
 {
 public:
     CanonicalGLWindowImpl();
+    ~CanonicalGLWindowImpl();
     //both affect the view matrix with translations for movement
     void keyPressEvent(QKeyEvent *ev) override;
     void keyReleaseEvent(QKeyEvent *ev) override;
@@ -27,8 +28,8 @@ private:
     //camera movement
     QVector3D cameraPosition;
     QVector3D moveDir; //Vector that shows into the world coordinate direction (depending to wasd keys), where to move the camera
-    int* lastCursorPos;//member to calculate the mouse movement since last frame
-    float* viewAngles; //x-axis and y-axis angles in degrees
+    QVector<int> lastCursorPos;//member to calculate the mouse movement since last frame
+    QVector<float> viewAngles; //x-axis and y-axis angles in degrees
     //the scene to be rendered
     Scene* scene;
 

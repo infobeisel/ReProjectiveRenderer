@@ -6,7 +6,10 @@
 CanonicalGLWindowImpl::CanonicalGLWindowImpl()
 {
 }
-
+CanonicalGLWindowImpl::~CanonicalGLWindowImpl()
+{
+    delete scene;
+}
 void CanonicalGLWindowImpl::initializeGL() {
     initializeOpenGLFunctions();
     QString vertexShaderPath = ":/vertex.glsl";
@@ -52,12 +55,12 @@ void CanonicalGLWindowImpl::initializeGL() {
     scene->bind(&shaderProgram);
 
     //movement
-    lastCursorPos = new int[2];
-    lastCursorPos[0] = QCursor::pos().x();
-    lastCursorPos[1] = QCursor::pos().y();
-    viewAngles = new float[2];
-    viewAngles[0] = 0.0f;
-    viewAngles[1] = 0.0f;
+    lastCursorPos = QVector<int>();
+    lastCursorPos.push_back(QCursor::pos().x());
+    lastCursorPos.push_back(QCursor::pos().y());
+    viewAngles = QVector<float>();
+    viewAngles.push_back(0.0f);
+    viewAngles.push_back(0.0f);
     cameraPosition = QVector3D(0.0f,0.0f,0.0f);
     moveDir= QVector3D(0.0f,0.0f,0.0f);
 }

@@ -2,10 +2,21 @@
 #include <QList>
 ClientTextureArrayManager::ClientTextureArrayManager()
 {
-
+    gl = 0;
 }
 
+ClientTextureArrayManager::~ClientTextureArrayManager()
+{
+    //delete the client texture arrays
+    QMap<QString,ClientTextureArray*>::const_iterator i = texResToArray.constBegin();
+    while (i != texResToArray.constEnd()) {
+        delete i.value();
+        ++i;
+    }
+    //delete opengl server memory
+    gl->glDeleteTextures(texArrays.size(),texArrays.data());
 
+}
 void ClientTextureArrayManager::addImage(QString tname, QImage* timg) {
     ClientTexture* newTex = new ClientTexture(tname, timg);
     //key: concatenate width and height
@@ -36,10 +47,11 @@ ClientTextureArray* ClientTextureArrayManager::getTextureArray(QString toTexture
     return 0; //not yet added
 }
 
-void ClientTextureArrayManager::loadToServer(QOpenGLFunctions* gl) {
+void ClientTextureArrayManager::loadToServer(QOpenGLFunctions* tgl) {
+    gl = tgl;
     int texArrayCount = texResToArray.size(); // texture array count to create
-    GLuint* texArrays = new GLuint[texArrayCount];
-    gl->glGenTextures(texArrayCount,texArrays);
+    texArrays = QVector<GLuint>(texArrayCount);
+    gl->glGenTextures(texArrayCount,texArrays.data());
     QList<ClientTextureArray*> clientArrays = texResToArray.values();
 
     for(int i = 0 ; i < texArrayCount; i++) {

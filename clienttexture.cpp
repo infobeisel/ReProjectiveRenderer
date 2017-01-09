@@ -5,7 +5,10 @@ ClientTexture::ClientTexture(QString tname, QImage* timg)
     name = tname;
     img = timg;
 }
-
+ClientTexture::~ClientTexture()
+{
+    delete img;
+}
 QImage* ClientTexture::image() {
     return img;
 }

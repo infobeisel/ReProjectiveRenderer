@@ -8,6 +8,7 @@ class ClientTexture
 {
 public:
     ClientTexture(QString tname, QImage* timg);
+    ~ClientTexture();
     QImage* image();
     int width();
     int height();

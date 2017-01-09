@@ -10,11 +10,14 @@ class ClientTextureArrayManager
 {
 public:
     ClientTextureArrayManager();
+    ~ClientTextureArrayManager();
     void addImage(QString name, QImage* timg);
-    void loadToServer(QOpenGLFunctions* gl);
+    void loadToServer(QOpenGLFunctions* tgl);
     ClientTextureArray* getTextureArray(QString toTextureName);
 private:
     QMap<QString,ClientTextureArray*> texResToArray;
+    QOpenGLFunctions* gl;
+    QVector<GLuint> texArrays;
 };
 
 #endif // CLIENTTEXTUREARRAYMANAGER_H

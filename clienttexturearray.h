@@ -9,6 +9,7 @@ class ClientTextureArray
 {
 public:
     ClientTextureArray(int twidth, int theight);
+    ~ClientTextureArray();
     ClientTexture* getTexture(QString toTextureName);
     ClientTexture* getTexture(int toTextureIndex);
     void addTexture(ClientTexture* tex);

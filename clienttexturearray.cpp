@@ -1,5 +1,5 @@
 #include "clienttexturearray.h"
- #include <QDebug>
+#include <QDebug>
 ClientTextureArray::ClientTextureArray(int twidth, int theight)
 {
     textureNameMap = QMap<QString,ClientTexture*>();
@@ -9,6 +9,20 @@ ClientTextureArray::ClientTextureArray(int twidth, int theight)
     textureUnitIndex = 0;
     textureArrayName = 0;
 
+}
+ClientTextureArray::~ClientTextureArray()
+{
+    textures = QVector<ClientTexture*>();
+    for(int i= 0;i < textures.size(); i++) {
+        delete textures[i];
+    }
+    textures.clear();
+    QMap<QString,ClientTexture*>::const_iterator i = textureNameMap.constBegin();
+    while (i != textureNameMap.constEnd()) {
+        delete i.value();
+        ++i;
+    }
+    textureNameMap.clear();
 }
 ClientTexture* ClientTextureArray::getTexture(QString toTextureName) {
     return textureNameMap[toTextureName];

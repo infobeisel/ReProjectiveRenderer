@@ -13,12 +13,8 @@ Scene::Scene(QString fullPath,QOpenGLFunctions* tgl)
 Scene::~Scene()
 {
 
-    vertexArrayObject.destroy();
-    vertexBufferObject.destroy();
-    normalBufferObject.destroy();
-    textureUVBufferObject.destroy();
-    indexBufferObject.destroy();
-    s->~aiScene();
+    delete s;
+    delete textureManager;
 }
 
 /**
@@ -29,6 +25,8 @@ void Scene::load() {
     QString path = basePath + name;
     //importer and scene are both held as member to avoid scene deletion (due to importer deallocation)
     s = importer.ReadFile( path.toStdString(),aiProcessPreset_TargetRealtime_Quality);
+    //initi texture manager
+    textureManager = new ClientTextureArrayManager();
     //create the data for the buffers
     QVector<float> vertices = QVector<float>(0);
     QVector<float> normals = QVector<float>(0);
@@ -126,11 +124,11 @@ void Scene::load() {
                 QImage* mirrored = new QImage(img->width(),img->height(),img->format());
                 (*mirrored) = img->mirrored();
                 //add to manager
-                textureManager.addImage(texturePath,mirrored);
+                textureManager->addImage(texturePath,mirrored);
             }
         }
     }
-    textureManager.loadToServer(gl);
+    textureManager->loadToServer(gl);
 
     vertexArrayObject.release();
 }
@@ -201,7 +199,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
                 aiString tpath;
                 if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
                     QString qtpath = tpath.data;
-                    ClientTextureArray* array = textureManager.getTextureArray(qtpath);
+                    ClientTextureArray* array = textureManager->getTextureArray(qtpath);
                     ClientTexture* tex = array->getTexture(qtpath);
                     gl->glActiveTexture(array->getTextureUnitIndex());
                     gl->glBindTexture(GL_TEXTURE_2D_ARRAY,array->getServerTextureName());

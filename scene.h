@@ -1,6 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 #include "clienttexturearraymanager.h"
+#include <memory>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
@@ -28,7 +29,7 @@ private:
     QString name; //name of the scene file
     QString basePath; //path to the scene file
 
-    ClientTextureArrayManager textureManager;
+    ClientTextureArrayManager* textureManager;
     //the importer object and the scene from assimp
     const aiScene* s;
     Assimp::Importer importer;

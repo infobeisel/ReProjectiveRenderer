@@ -100,10 +100,20 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions* tgl) {
         gl->glBindTexture(GL_TEXTURE_2D_ARRAY, 0); //unbind
 
     }
+}
 
+void ClientTextureArrayManager::bindLoadedTexture(QString tName,const char* samplerName,const char* arrayIndexVariableName, QOpenGLShaderProgram* withProgram) {
 
+    if(gl==0) return;
 
-
+    ClientTextureArray* arr = getTextureArray(tName);
+    if(arr != 0) {
+        ClientTexture* tex = arr->getTexture(tName);
+        gl->glActiveTexture(arr->getTextureUnitIndex());
+        gl->glBindTexture(GL_TEXTURE_2D_ARRAY,arr->getServerTextureName());
+        withProgram->setUniformValue(samplerName , arr->getTextureUnitIndex() - GL_TEXTURE0 ); //has to be 0 or 1 or ...
+        withProgram->setUniformValue(arrayIndexVariableName,(float)tex->getIndex()); //index for the texture array
+    }
 
 
 }

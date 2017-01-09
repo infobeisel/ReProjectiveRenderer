@@ -10,14 +10,26 @@ in vec2 interpolatedUV;
 //in vec3 interpolatedNormal;
 
 //texture information: in which layer this fragment has to lookup the texture?
-uniform float textureArrayIndex;
-uniform sampler2DArray tex;
+uniform float diffuseTextureArrayIndex;
+uniform sampler2DArray diffuseSampler;
+uniform float ambientTextureArrayIndex;
+uniform sampler2DArray ambientSampler;
+uniform float specularTextureArrayIndex;
+uniform sampler2DArray specularSampler;
+uniform float bumpTextureArrayIndex;
+uniform sampler2DArray bumpSampler;
 //uniform vec2 uvScaleFactor;
 
 void main() {
     vec4 textureColor = vec4(0.0);
 
-    if(textureArrayIndex > 0.0f)
-        textureColor = texture(tex,vec3(interpolatedUV.x  ,interpolatedUV.y ,textureArrayIndex));
+    if(diffuseTextureArrayIndex >= 0.0f)
+        textureColor += texture(diffuseSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,diffuseTextureArrayIndex));
+    if(ambientTextureArrayIndex >= 0.0f)
+        textureColor += texture(ambientSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,ambientTextureArrayIndex));
+    if(specularTextureArrayIndex >= 0.0f)
+        textureColor += texture(specularSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,specularTextureArrayIndex));
+    if(bumpTextureArrayIndex >= 0.0f)
+        textureColor += texture(bumpSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,bumpTextureArrayIndex));
     colour = textureColor;
 }

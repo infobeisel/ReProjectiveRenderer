@@ -193,21 +193,28 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             withProgram->setUniformValue("Ka",QVector3D(ka.x,ka.y,ka.z));
             withProgram->setUniformValue("Kd",QVector3D(kd.x,kd.y,kd.z));
             withProgram->setUniformValue("Ks",QVector3D(ks.x,ks.y,ks.z));
+
             //set texture parameters
-            //diffuse texture (sampler is already set up
-            if((mat->GetTextureCount(aiTextureType_HEIGHT) > 0)) {
-                aiString tpath;
-                if (mat->GetTexture(aiTextureType_HEIGHT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-                    QString qtpath = tpath.data;
-                    ClientTextureArray* array = textureManager->getTextureArray(qtpath);
-                    ClientTexture* tex = array->getTexture(qtpath);
-                    gl->glActiveTexture(array->getTextureUnitIndex());
-                    gl->glBindTexture(GL_TEXTURE_2D_ARRAY,array->getServerTextureName());
-                    withProgram->setUniformValue( "tex", array->getTextureUnitIndex() - GL_TEXTURE0 ); //has to be 0 or 1 or ...
-                    withProgram->setUniformValue("textureArrayIndex",(float)tex->getIndex()); //index for the texture array
-                }
+            aiString tpath;
+            if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                textureManager->bindLoadedTexture(QString(tpath.data),&"diffuseSampler"[0],&"diffuseTextureArrayIndex"[0],withProgram);
             } else
-                withProgram->setUniformValue("textureArrayIndex",-1.0f); //index for the texture array
+                textureManager->bindLoadedTexture(QString(tpath.data),&"diffuseSampler"[0],&"diffuseTextureArrayIndex"[0],withProgram);
+
+            if (mat->GetTexture(aiTextureType_AMBIENT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                textureManager->bindLoadedTexture(QString(tpath.data),&"ambientSampler"[0],&"ambientTextureArrayIndex"[0],withProgram);
+            } else
+                textureManager->bindLoadedTexture(QString(tpath.data),&"ambientSampler"[0],&"ambientTextureArrayIndex"[0],withProgram);
+
+            if (mat->GetTexture(aiTextureType_SPECULAR, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                textureManager->bindLoadedTexture(QString(tpath.data),&"specularSampler"[0],&"specularTextureArrayIndex"[0],withProgram);
+            } else
+                textureManager->bindLoadedTexture(QString(tpath.data),&"specularSampler"[0],&"specularTextureArrayIndex"[0],withProgram);
+
+            if (mat->GetTexture(aiTextureType_HEIGHT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
+            } else
+                textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
 
 
             //assume triangles

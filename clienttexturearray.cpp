@@ -1,6 +1,6 @@
 #include "clienttexturearray.h"
 #include <QDebug>
-ClientTextureArray::ClientTextureArray(int twidth, int theight)
+ClientTextureArray::ClientTextureArray(int twidth, int theight, int tFormat)
 {
     textureNameMap = QMap<QString,ClientTexture*>();
     textures = QVector<ClientTexture*>();
@@ -8,6 +8,7 @@ ClientTextureArray::ClientTextureArray(int twidth, int theight)
     height = theight;
     textureUnitIndex = 0;
     textureArrayName = 0;
+    format = tFormat;
 
 }
 ClientTextureArray::~ClientTextureArray()
@@ -24,6 +25,10 @@ ClientTextureArray::~ClientTextureArray()
     }
     textureNameMap.clear();
 }
+
+int ClientTextureArray::getFormat() { return format;}
+void ClientTextureArray::setFormat(int f) {format = f;}
+
 ClientTexture* ClientTextureArray::getTexture(QString toTextureName) {
     return textureNameMap[toTextureName];
 }

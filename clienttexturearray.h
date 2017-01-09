@@ -8,7 +8,7 @@
 class ClientTextureArray
 {
 public:
-    ClientTextureArray(int twidth, int theight);
+    ClientTextureArray(int twidth, int theight, int tformat);
     ~ClientTextureArray();
     ClientTexture* getTexture(QString toTextureName);
     ClientTexture* getTexture(int toTextureIndex);
@@ -16,6 +16,8 @@ public:
     int getWidth();
     int getHeight();
     int getDepth();
+    int getFormat();
+    void setFormat(int f);
     int getTextureUnitIndex();
     GLuint getServerTextureName();
     void setTextureUnitIndex(int i);
@@ -25,6 +27,7 @@ private:
     QVector<ClientTexture*> textures;
     int width;
     int height;
+    int format;
     int textureUnitIndex;
     GLuint textureArrayName;
 };

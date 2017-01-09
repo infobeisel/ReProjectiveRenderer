@@ -15,6 +15,9 @@ uniform sampler2DArray tex;
 //uniform vec2 uvScaleFactor;
 
 void main() {
-    vec4 textureColor = texture(tex,vec3(interpolatedUV.x  ,interpolatedUV.y ,textureArrayIndex));
+    vec4 textureColor = vec4(0.0);
+
+    if(textureArrayIndex > 0.0f)
+        textureColor = texture(tex,vec3(interpolatedUV.x  ,interpolatedUV.y ,textureArrayIndex));
     colour = textureColor;
 }

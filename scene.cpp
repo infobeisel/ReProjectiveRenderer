@@ -195,9 +195,9 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             withProgram->setUniformValue("Ks",QVector3D(ks.x,ks.y,ks.z));
             //set texture parameters
             //diffuse texture (sampler is already set up
-            if((mat->GetTextureCount(aiTextureType_DIFFUSE) > 0)) {
+            if((mat->GetTextureCount(aiTextureType_HEIGHT) > 0)) {
                 aiString tpath;
-                if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                if (mat->GetTexture(aiTextureType_HEIGHT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
                     QString qtpath = tpath.data;
                     ClientTextureArray* array = textureManager->getTextureArray(qtpath);
                     ClientTexture* tex = array->getTexture(qtpath);

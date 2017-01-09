@@ -1,5 +1,6 @@
 #include "clienttexturearraymanager.h"
 #include <QList>
+#include <QDebug>
 ClientTextureArrayManager::ClientTextureArrayManager()
 {
     gl = 0;
@@ -20,10 +21,10 @@ ClientTextureArrayManager::~ClientTextureArrayManager()
 void ClientTextureArrayManager::addImage(QString tname, QImage* timg) {
     ClientTexture* newTex = new ClientTexture(tname, timg);
     //key: concatenate width and height
-    QString res = QString::number(newTex->width()) + QString::number(newTex->height());
+    QString res = QString::number(newTex->width()) + QString::number(newTex->height()) + QString::number(timg->format());
     //if no texture stack with this res exists, make a new one
     if(texResToArray.find(res) == texResToArray.end()) {
-        ClientTextureArray* tar = new ClientTextureArray(newTex->width(),newTex->height());
+        ClientTextureArray* tar = new ClientTextureArray(newTex->width(),newTex->height(),timg->format());
         texResToArray[res] = tar;
 
     }
@@ -64,10 +65,17 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions* tgl) {
         gl->glActiveTexture(textureUnitIndex);
         gl->glBindTexture(GL_TEXTURE_2D_ARRAY,texArray);
 
+        GLuint format = GL_BGRA;
+        GLuint internalFormat = GL_RGBA;
+        if(clientArray->getFormat() == QImage::Format_Grayscale8) {
+            format = GL_RED;
+            internalFormat = GL_RED;
+
+        }
 
 
-        glTexImage3D (GL_TEXTURE_2D_ARRAY, 0,  GL_RGBA , clientArray->getWidth(), clientArray->getHeight(),
-            clientArray->getDepth(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        glTexImage3D (GL_TEXTURE_2D_ARRAY, 0,  internalFormat , clientArray->getWidth(), clientArray->getHeight(),
+            clientArray->getDepth(), 0, format, GL_UNSIGNED_BYTE, 0);
 
         for(int imgi = 0; imgi<clientArray->getDepth(); imgi++) { //add each texture to the texture array
             GLenum t_target = GL_TEXTURE_2D_ARRAY;
@@ -81,7 +89,7 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions* tgl) {
                             0,
                             0,0,imgi,
                             clientTex->width(),clientTex->height(),1,
-                            GL_RGBA,         // format
+                            format,         // format
                             GL_UNSIGNED_BYTE, // type
                             clientTex->image()->bits());
             gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);

@@ -30,12 +30,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../assimp/lib/release/ -lassimp
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../assimp/lib/debug/ -lassimp
-else:unix: LIBS += -L$$PWD/../../assimp/lib/ -lassimp
-
-INCLUDEPATH += $$PWD/../../assimp/include
-DEPENDPATH += $$PWD/../../assimp/include
 
 RESOURCES += \
     resources.qrc
@@ -47,3 +41,11 @@ HEADERS += \
     clienttexturearraymanager.h \
     clienttexturearray.h \
     clienttexture.h
+
+#added assimp as external library in the project directory...
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/assimp/lib/release/ -lassimp
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/assimp/lib/debug/ -lassimp
+else:unix: LIBS += -L$$PWD/assimp/lib/ -lassimp
+
+INCLUDEPATH += $$PWD/assimp/include
+DEPENDPATH += $$PWD/assimp/include

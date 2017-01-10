@@ -24,6 +24,7 @@ private:
     QOpenGLVertexArrayObject vertexArrayObject;
     QOpenGLBuffer vertexBufferObject;
     QOpenGLBuffer normalBufferObject;
+    QOpenGLBuffer tangentBufferObject;
     QOpenGLBuffer textureUVBufferObject;
     QOpenGLBuffer indexBufferObject;
     QString name; //name of the scene file

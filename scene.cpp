@@ -30,6 +30,7 @@ void Scene::load() {
     //create the data for the buffers
     QVector<float> vertices = QVector<float>(0);
     QVector<float> normals = QVector<float>(0);
+    QVector<float> tangents = QVector<float>(0);
     QVector<float> textureUVs = QVector<float>(0); //Caution: assuming 1 uv channel.
     QVector<unsigned int> indices  = QVector<unsigned int>(0);
     //go through all nodes
@@ -55,6 +56,13 @@ void Scene::load() {
                     normals.push_back(norm.x);
                     normals.push_back(norm.y);
                     normals.push_back(norm.z);
+                    if(mesh->HasTangentsAndBitangents()) {
+                        aiVector3D &tangent = mesh->mTangents[j];
+                        tangents.push_back(tangent.x);
+                        tangents.push_back(tangent.y);
+                        tangents.push_back(tangent.z);
+                    }
+
                     if(mesh->HasTextureCoords(0)) {
                         //assuming only one uv channel (one set of uv coordinates)
                         aiVector3D &uv = mesh->mTextureCoords[0][j];
@@ -73,7 +81,7 @@ void Scene::load() {
                     indices.push_back(face.mIndices[1] + offset);
                     indices.push_back(face.mIndices[2] + offset);
                 }
-                //TODO ignored tangent and bitangent vectors for now
+
             }
         }
         //add all children
@@ -94,6 +102,13 @@ void Scene::load() {
     normalBufferObject.setUsagePattern( QOpenGLBuffer::StaticDraw );
     normalBufferObject.bind();
     normalBufferObject.allocate( &normals[0], normals.size() * sizeof( float ) );
+
+    tangentBufferObject = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    tangentBufferObject.create();
+    tangentBufferObject.setUsagePattern( QOpenGLBuffer::StaticDraw );
+    tangentBufferObject.bind();
+    tangentBufferObject.allocate( &tangents[0], tangents.size() * sizeof( float ) );
+
     if(textureUVs.size() != 0)
     {
         textureUVBufferObject.create();
@@ -153,6 +168,12 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
         toProgram->enableAttributeArray(2);
         toProgram->setAttributeBuffer( 2,GL_FLOAT,0,2);
     }
+    //tangent data to shaders layout location 3
+    if(!tangentBufferObject.bind())
+        qDebug() << "ERROR binding tangentBufferObject";
+    toProgram->enableAttributeArray(3);
+    toProgram->setAttributeBuffer( 3,GL_FLOAT,0,3);
+
     indexBufferObject.bind();
 
     vertexArrayObject.release();
@@ -164,6 +185,14 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
     //array to traverse the node tree
     QVector<aiNode*> nodes;
     nodes.push_back(s->mRootNode);
+
+    if(s->HasLights()) {
+        for(int i = 0; i < s->mNumLights; i++) {
+            aiLight* l = s->mLights[i];
+
+        }
+    }
+
     int indexOffsetCounter = 0;
     while(nodes.size() != 0) {
         //handle current node

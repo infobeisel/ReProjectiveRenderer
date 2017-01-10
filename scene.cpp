@@ -186,10 +186,11 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
     QVector<aiNode*> nodes;
     nodes.push_back(s->mRootNode);
 
+    //qDebug() << s->HasLights();
     if(s->HasLights()) {
         for(int i = 0; i < s->mNumLights; i++) {
             aiLight* l = s->mLights[i];
-
+            qDebug() << "found light in scene " << l->mName.data << " " << l->mType;
         }
     }
 
@@ -197,31 +198,33 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
     while(nodes.size() != 0) {
         //handle current node
         aiNode* node = nodes.takeFirst();
-        //setup the matrices for rendering this node
+
         QMatrix4x4 modelMatrix =  QMatrix4x4(node->mTransformation[0]);
         QMatrix4x4 modelViewMatrix = viewMatrix * modelMatrix;
-        QMatrix3x3 normalMatrix = modelViewMatrix.normalMatrix();
+        QMatrix3x3 n = modelViewMatrix.normalMatrix();
         QMatrix4x4 mvp = projMatrix * modelViewMatrix;
-        withProgram->setUniformValue( "MV", modelViewMatrix );
-        withProgram->setUniformValue( "N", normalMatrix );
         withProgram->setUniformValue( "MVP", mvp );
-        for(uint i = 0; i<(node->mNumMeshes); i++) { //go through this node's meshes
+        withProgram->setUniformValue( "NormalM", n );
+
+        for(uint i = 0; i < node->mNumMeshes; i++) { //go through this node's meshes
             int j = node->mMeshes[i];
             aiMesh** meshes = s->mMeshes;
             aiMesh* mesh = meshes[j]; //the mesh taken from the scene meshes array with the indices provided in the node
             //set all the mesh-specific parameters
             //materialparameters
             //Ka,Kd,Ks
-            aiVector3D ka (0.f,0.f,0.f);
-            aiVector3D kd (0.f,0.f,0.f);
-            aiVector3D ks (0.f,0.f,0.f);
+            aiColor3D ka (0.f,0.f,0.f);
+            aiColor3D kd (0.f,0.f,0.f);
+            aiColor3D ks (0.f,0.f,0.f);
             aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
+
             mat->Get( AI_MATKEY_COLOR_AMBIENT, ka);
             mat->Get( AI_MATKEY_COLOR_DIFFUSE, kd);
             mat->Get( AI_MATKEY_COLOR_SPECULAR, ks);
-            withProgram->setUniformValue("Ka",QVector3D(ka.x,ka.y,ka.z));
-            withProgram->setUniformValue("Kd",QVector3D(kd.x,kd.y,kd.z));
-            withProgram->setUniformValue("Ks",QVector3D(ks.x,ks.y,ks.z));
+
+            withProgram->setUniformValue("Ka",QVector3D(ka.r,ka.g,ka.b));
+            withProgram->setUniformValue("Kd",QVector3D(kd.r,kd.g,kd.b));
+            withProgram->setUniformValue("Ks",QVector3D(ks.r,ks.g,ks.b));
 
             //set texture parameters
             aiString tpath;

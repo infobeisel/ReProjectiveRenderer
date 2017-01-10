@@ -6,10 +6,12 @@ layout(location = 3) in vec3 tangent;
 
 
 uniform mat4 MVP;
+uniform mat3 NormalM;
 
 out vec2 interpolatedUV;
-//out vec3 interpolatedNormal;
+out vec3 interpolatedNormal;
 void main() {
     gl_Position = MVP * vec4(position,1.0);
     interpolatedUV = uv;
+    interpolatedNormal = normalize(NormalM * normal);
 }

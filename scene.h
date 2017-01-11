@@ -12,10 +12,22 @@
 
 class Scene
 {
+    struct LightSource {
+        QVector3D ambient;
+        QVector3D diffuse;
+        QVector3D specular;
+        QVector3D position;
+        QVector3D direction;
+        float attenuationConstant;
+        float attenuationLinear;
+        float attenuationQuadratic;
+
+    };
+
 public:
     Scene(QString fullPath,QOpenGLFunctions* tgl);
     ~Scene();
-    void load(); //loads the model into client side ram and then into server side buffer objects
+    void load(QOpenGLShaderProgram *toProgram); //loads the model into client side ram and then into server side buffer objects
     void bind(QOpenGLShaderProgram *toProgram); //bind everything and set attribute pointers
     //draw this scene
     void draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix);
@@ -30,6 +42,7 @@ private:
     QString name; //name of the scene file
     QString basePath; //path to the scene file
 
+    QMap<QString,int> lightSourceNameToLightArrayIndex;
     ClientTextureArrayManager* textureManager;
     //the importer object and the scene from assimp
     const aiScene* s;

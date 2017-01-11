@@ -2,6 +2,8 @@
 #include <QVector>
 #include <QImage>
 
+
+
 Scene::Scene(QString fullPath,QOpenGLFunctions* tgl)
 {
     gl = tgl;
@@ -21,10 +23,11 @@ Scene::~Scene()
  * @brief reads the file which was specified by fullPath param in the constructor and generates and fills opengl buffer objects
  * NOTE: assumes 1 uv channel for each vertex, ignores the rest (during rendering the same uv coord is used for every texture lookup, if a mesh has multiple textures)
  */
-void Scene::load() {
+void Scene::load(QOpenGLShaderProgram *toProgram) {
     QString path = basePath + name;
     //importer and scene are both held as member to avoid scene deletion (due to importer deallocation)
     s = importer.ReadFile( path.toStdString(),aiProcessPreset_TargetRealtime_Quality);
+    qDebug() << importer.GetErrorString();
     //initi texture manager
     textureManager = new ClientTextureArrayManager();
     //create the data for the buffers
@@ -33,6 +36,19 @@ void Scene::load() {
     QVector<float> tangents = QVector<float>(0);
     QVector<float> textureUVs = QVector<float>(0); //Caution: assuming 1 uv channel.
     QVector<unsigned int> indices  = QVector<unsigned int>(0);
+
+    //load the lights. store them in a map which maps node name to aiLight datastructure
+    //lights: read lightsources array
+    QMap<QString,int> lightSourceNameToLightArrayIndex;
+    if(s->HasLights()) {
+        for(int i = 0; i < s->mNumLights; i++) {
+            aiLight* li = s->mLights[i];
+            QString lightName = li->mName.data;
+            //qDebug() << "found light in scene " << li->mName.data << " " << li->mType ;
+            lightSourceNameToLightArrayIndex[lightName] = i;
+        }
+    }
+
     //go through all nodes
     //array to traverse the node tree
     QVector<aiNode*> nodes;
@@ -40,6 +56,19 @@ void Scene::load() {
     while(nodes.size() != 0) {
         //handle current node
         aiNode* node = nodes.takeFirst();
+        //is this node a light source? if yes update position and direction into the aiLight datastructure
+        if(s->HasLights()) {
+            if(lightSourceNameToLightArrayIndex.find(QString(node->mName.data)) != lightSourceNameToLightArrayIndex.end()) {
+                QMatrix4x4 modelMatrix =  QMatrix4x4(node->mTransformation[0]);
+                QVector3D dir = modelMatrix.map(QVector3D(0.0f,0.0f,1.0f));
+                //qDebug() << QString(node->mName.data) << QVector4D(node->mTransformation.a4,node->mTransformation.b4,node->mTransformation.c4,node->mTransformation.d4);
+                int lightSourceIndex = lightSourceNameToLightArrayIndex[QString(node->mName.data)];
+                aiLight* li = s->mLights[lightSourceIndex];
+                //update positions! (assimp doesnt store light position and direction into the aiLight datastructure, only into the node's transformation
+                li->mPosition = aiVector3D(node->mTransformation.a4,node->mTransformation.b4,node->mTransformation.c4);
+                li->mDirection = aiVector3D(dir.x(),dir.y(),dir.z());
+            }
+        }
         for(uint i = 0; i<node->mNumMeshes; i++) { //go through this node's meshes
             //the mesh taken from the scene meshes array with the indices provided in the node
             aiMesh* mesh = s->mMeshes[node->mMeshes[i]];
@@ -61,6 +90,11 @@ void Scene::load() {
                         tangents.push_back(tangent.x);
                         tangents.push_back(tangent.y);
                         tangents.push_back(tangent.z);
+                    } else {
+                        qDebug() << "WARNING: " << mesh->mName.data <<" Tangents set to (0,0,0)";
+                        tangents.push_back(0.0f);
+                        tangents.push_back(0.0f);
+                        tangents.push_back(0.0f);
                     }
 
                     if(mesh->HasTextureCoords(0)) {
@@ -103,6 +137,7 @@ void Scene::load() {
     normalBufferObject.bind();
     normalBufferObject.allocate( &normals[0], normals.size() * sizeof( float ) );
 
+
     tangentBufferObject = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     tangentBufferObject.create();
     tangentBufferObject.setUsagePattern( QOpenGLBuffer::StaticDraw );
@@ -143,7 +178,11 @@ void Scene::load() {
             }
         }
     }
+
     textureManager->loadToServer(gl);
+
+
+
 
     vertexArrayObject.release();
 }
@@ -174,6 +213,8 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
     toProgram->enableAttributeArray(3);
     toProgram->setAttributeBuffer( 3,GL_FLOAT,0,3);
 
+
+
     indexBufferObject.bind();
 
     vertexArrayObject.release();
@@ -181,29 +222,56 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
 
 void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix){
     vertexArrayObject.bind();
+
+    //tell the shader how many light sources there are
+    withProgram->setUniformValue( "lightCount", s->mNumLights );
+    //go through all lights and set the light uniforms
+    if(s->HasLights()) {
+        for(int i = 0; i < s->mNumLights; i++) {
+            aiLight* li = s->mLights[i];
+            //position and direction are stored in the accordin node!
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].position").toStdString().c_str(),
+                                          viewMatrix.map(QVector4D(li->mPosition.x,li->mPosition.y,li->mPosition.z,1.0f)) );
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].direction").toStdString().c_str(),
+                                          QVector3D(li->mDirection.x,li->mDirection.y,li->mDirection.z));
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].ambient").toStdString().c_str(),
+                                          QVector3D(li->mColorAmbient.r,li->mColorAmbient.g,li->mColorAmbient.b) );
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].diffuse").toStdString().c_str(),
+                                          QVector3D(li->mColorDiffuse.r,li->mColorDiffuse.g,li->mColorDiffuse.b) );
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].specular").toStdString().c_str(),
+                                          QVector3D(li->mColorSpecular.r,li->mColorSpecular.g,li->mColorSpecular.b) );
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].attenuationConstant").toStdString().c_str(),
+                                          (float)li->mAttenuationConstant );
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].attenuationLinear").toStdString().c_str(),
+                                          (float)li->mAttenuationLinear );
+            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].attenuationQuadratic").toStdString().c_str(),
+                                          (float)li->mAttenuationQuadratic );
+        }
+    }
+
+
+
+
+
     //go through all nodes (EXACTLY AS THEY WERE LOADED INTO THE VERTEX BUFFER)
     //array to traverse the node tree
     QVector<aiNode*> nodes;
     nodes.push_back(s->mRootNode);
 
-    //qDebug() << s->HasLights();
-    if(s->HasLights()) {
-        for(int i = 0; i < s->mNumLights; i++) {
-            aiLight* l = s->mLights[i];
-            qDebug() << "found light in scene " << l->mName.data << " " << l->mType;
-        }
-    }
-
     int indexOffsetCounter = 0;
     while(nodes.size() != 0) {
         //handle current node
         aiNode* node = nodes.takeFirst();
-
+        //qDebug() << QString(node->mName.data) << node->mTransformation.a4 <<node->mTransformation.b4 <<node->mTransformation.c4 <<node->mTransformation.d4  ;
         QMatrix4x4 modelMatrix =  QMatrix4x4(node->mTransformation[0]);
         QMatrix4x4 modelViewMatrix = viewMatrix * modelMatrix;
         QMatrix3x3 n = modelViewMatrix.normalMatrix();
-        QMatrix4x4 mvp = projMatrix * modelViewMatrix;
+        QMatrix4x4 vp = projMatrix * viewMatrix;
+        QMatrix4x4 mvp = vp * modelMatrix;
+        withProgram->setUniformValue( "M", modelMatrix );
+        withProgram->setUniformValue( "MV", modelViewMatrix );
         withProgram->setUniformValue( "MVP", mvp );
+        withProgram->setUniformValue( "VP", vp );
         withProgram->setUniformValue( "NormalM", n );
 
         for(uint i = 0; i < node->mNumMeshes; i++) { //go through this node's meshes
@@ -217,6 +285,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             aiColor3D kd (0.f,0.f,0.f);
             aiColor3D ks (0.f,0.f,0.f);
             aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
+            //qDebug() << "vertex " <<   modelMatrix.map (QVector4D(mesh->mVertices[0].x,mesh->mVertices[0].y,mesh->mVertices[0].z,1.0f));
 
             mat->Get( AI_MATKEY_COLOR_AMBIENT, ka);
             mat->Get( AI_MATKEY_COLOR_DIFFUSE, kd);

@@ -45,13 +45,16 @@ void CanonicalGLWindowImpl::initializeGL() {
     glEnable(GL_DEPTH_TEST);
     glClearColor(.9f, .9f, .93f ,1.0f);
 
-    //load model
+    //load models
     std::ifstream in("scenelocation");
     std::string contents((std::istreambuf_iterator<char>(in)),
         std::istreambuf_iterator<char>());
-    QString p = (QString::fromStdString(contents)).simplified(); //remove \n s etc.
-    scene = new Scene(p,this);
-    scene->load();
+    //QString p = (QString::fromStdString(contents)).simplified(); //remove \n s etc.
+    QStringList paths = QString::fromStdString(contents).split("\n");
+
+
+    scene = new Scene(paths.at(0),this);
+    scene->load(&shaderProgram);
     scene->bind(&shaderProgram);
 
     //movement

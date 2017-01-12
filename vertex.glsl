@@ -14,11 +14,13 @@ uniform mat3 NormalM;
 out vec4 interpolatedPos;
 out vec2 interpolatedUV;
 out vec3 interpolatedNormal;
-
+out vec3 interpolatedViewDir;
 void main() {
     gl_Position = MVP * vec4(position,1.0);
     interpolatedPos = MV * vec4(position,1.0);
     interpolatedUV = uv;
-    interpolatedNormal = normal;//normalize(NormalM * normal);
+    interpolatedNormal = normalize(NormalM * normal);
+    interpolatedViewDir = normalize(NormalM * vec3(interpolatedPos));
+
 
 }

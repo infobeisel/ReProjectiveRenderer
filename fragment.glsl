@@ -18,6 +18,7 @@ struct LightSource {
 uniform vec3 Ka;
 uniform vec3 Kd;
 uniform vec3 Ks;
+uniform mat3 NormalM;
 
 
 uniform int lightCount;
@@ -28,7 +29,7 @@ uniform LightSource lights[maxLightCount];
 in vec2 interpolatedUV;
 in vec3 interpolatedNormal;
 in vec4 interpolatedPos;
-
+in vec3 interpolatedViewDir;
 //texture information: in which layer this fragment has to lookup the texture?
 uniform float diffuseTextureArrayIndex;
 uniform sampler2DArray diffuseSampler;
@@ -59,8 +60,15 @@ void main() {
         //lights
         float d = distance(interpolatedPos,lights[i].position);
         float atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * d + lights[i].attenuationQuadratic * d*d);
-        //float NL = dot(interpolatedNormal , lights[i].direction);
+        //light direction (point light!)
+        vec3 l = vec3(normalize(lights[i].position - interpolatedPos));
+        vec3 v = interpolatedViewDir;
+        vec3 n = interpolatedNormal;
+
+
+        float NL = dot(n , l);
         vec3 t = (Kd * lights[i].diffuse);
+        t *= NL;
         t *= atten;
         diffContr += vec4(t,1.0);
     }

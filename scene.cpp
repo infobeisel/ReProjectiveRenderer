@@ -231,7 +231,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             aiLight* li = s->mLights[i];
             //position and direction are stored in the accordin node!
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].position").toStdString().c_str(),
-                                          viewMatrix.map(QVector4D(li->mPosition.x,li->mPosition.y,li->mPosition.z,1.0f)) );
+                                          viewMatrix.map(QVector4D(li->mPosition.x,li->mPosition.y,li->mPosition.z,1.0f)) ); //position is already in world coordinates, so no MV necessary, just V
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].direction").toStdString().c_str(),
                                           QVector3D(li->mDirection.x,li->mDirection.y,li->mDirection.z));
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].ambient").toStdString().c_str(),

@@ -231,7 +231,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             aiLight* li = s->mLights[i];
             //position and direction are stored in the accordin node!
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].position").toStdString().c_str(),
-                                          viewMatrix.map(QVector4D(li->mPosition.x,li->mPosition.y,li->mPosition.z,1.0f)) ); //position is already in world coordinates, so no MV necessary, just V
+                                          viewMatrix.map(QVector4D(li->mPosition.x,li->mPosition.y,li->mPosition.z,1.0f)) ); //world coordinates
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].direction").toStdString().c_str(),
                                           QVector3D(li->mDirection.x,li->mDirection.y,li->mDirection.z));
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].ambient").toStdString().c_str(),
@@ -248,6 +248,8 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
                                           (float)li->mAttenuationQuadratic );
         }
     }
+
+    //set camera direction for fragment shader
 
 
 
@@ -284,16 +286,20 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             aiColor3D ka (0.f,0.f,0.f);
             aiColor3D kd (0.f,0.f,0.f);
             aiColor3D ks (0.f,0.f,0.f);
+            float shininess = 1.0f;
             aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
             //qDebug() << "vertex " <<   modelMatrix.map (QVector4D(mesh->mVertices[0].x,mesh->mVertices[0].y,mesh->mVertices[0].z,1.0f));
 
             mat->Get( AI_MATKEY_COLOR_AMBIENT, ka);
             mat->Get( AI_MATKEY_COLOR_DIFFUSE, kd);
             mat->Get( AI_MATKEY_COLOR_SPECULAR, ks);
+            mat->Get( AI_MATKEY_SHININESS, shininess );
+            //qDebug() << "shininess  " << shininess;
 
             withProgram->setUniformValue("Ka",QVector3D(ka.r,ka.g,ka.b));
             withProgram->setUniformValue("Kd",QVector3D(kd.r,kd.g,kd.b));
             withProgram->setUniformValue("Ks",QVector3D(ks.r,ks.g,ks.b));
+            withProgram->setUniformValue("specularExponent",shininess);
 
             //set texture parameters
             aiString tpath;

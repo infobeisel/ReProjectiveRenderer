@@ -17,10 +17,10 @@ out vec3 interpolatedNormal;
 out vec3 interpolatedViewDir;
 void main() {
     gl_Position = MVP * vec4(position,1.0);
-    interpolatedPos = MV * vec4(position,1.0);
+    interpolatedPos = MV * vec4(position,1.0); //camera space coordinates
     interpolatedUV = uv;
     interpolatedNormal = normalize(NormalM * normal);
-    interpolatedViewDir = normalize(NormalM * vec3(interpolatedPos));
+    interpolatedViewDir =  normalize( vec3(-interpolatedPos));
 
 
 }

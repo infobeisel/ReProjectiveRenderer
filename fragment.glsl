@@ -7,7 +7,7 @@ struct LightSource {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
-    vec4 position;
+    vec4 position; //in camera space coordinates
     vec3 direction;
     float attenuationConstant;
     float attenuationLinear;
@@ -18,6 +18,8 @@ struct LightSource {
 uniform vec3 Ka;
 uniform vec3 Kd;
 uniform vec3 Ks;
+uniform float specularExponent;
+
 uniform mat3 NormalM;
 
 
@@ -28,7 +30,7 @@ uniform LightSource lights[maxLightCount];
 
 in vec2 interpolatedUV;
 in vec3 interpolatedNormal;
-in vec4 interpolatedPos;
+in vec4 interpolatedPos; // in camera space coordinates
 in vec3 interpolatedViewDir;
 //texture information: in which layer this fragment has to lookup the texture?
 uniform float diffuseTextureArrayIndex;
@@ -39,7 +41,6 @@ uniform float specularTextureArrayIndex;
 uniform sampler2DArray specularSampler;
 uniform float bumpTextureArrayIndex;
 uniform sampler2DArray bumpSampler;
-//uniform vec2 uvScaleFactor;
 
 void main() {
     vec4 textureColorAmb = vec4(0.0);
@@ -58,19 +59,30 @@ void main() {
     //treat them as point lights
     for(int i = 0; i < lightCount; i++) {
         //lights
-        float d = distance(interpolatedPos,lights[i].position);
-        float atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * d + lights[i].attenuationQuadratic * d*d);
+        float dist = distance(interpolatedPos,lights[i].position);
+        float atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * dist + lights[i].attenuationQuadratic * dist*dist);
         //light direction (point light!)
         vec3 l = vec3(normalize(lights[i].position - interpolatedPos));
-        vec3 v = interpolatedViewDir;
-        vec3 n = interpolatedNormal;
-
-
+        vec3 v = normalize(interpolatedViewDir);
+        vec3 n = normalize(interpolatedNormal);
         float NL = dot(n , l);
-        vec3 t = (Kd * lights[i].diffuse);
-        t *= NL;
-        t *= atten;
-        diffContr += vec4(t,1.0);
+        //NL is negative -> do not contribute negative values
+        if(NL > 0.0) {
+            vec3 rl = 2 * n * NL - l;
+            float RLV = max(dot(rl,v),0.0);
+            vec3 d = (Kd * lights[i].diffuse);
+            vec3 a = (Ka * lights[i].ambient);
+            vec3 s = (Ks * lights[i].specular);
+            d *= NL;
+            d *= atten;
+            a *= atten;
+            s *= pow(RLV,specularExponent);
+            //s *= atten;
+            diffContr += vec4(d,1.0);
+            ambContr += vec4(a,1.0);
+            specContr += vec4(s,1.0);
+        }
     }
-    colour =  diffContr * textureColorDif;
+    colour = specContr * textureColorSpec + ambContr * textureColorAmb +  diffContr * textureColorDif;
+
 }

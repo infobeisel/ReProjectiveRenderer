@@ -77,6 +77,10 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
 void CanonicalGLWindowImpl::paintGL() {
     // Clear color and depth buffers
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //tell the shader the camera world pos
+    shaderProgram.setUniformValue("cameraWorldPos",cameraPosition);
+
     scene->draw(&shaderProgram,view,projection);
     handleCursor(&view);
     //trigger an update so that this function gets called the next frame again

@@ -11,16 +11,19 @@ uniform mat4 MV;
 uniform mat4 VP;
 uniform mat3 NormalM;
 
-out vec4 interpolatedPos;
+out vec3 interpolatedPos;
 out vec2 interpolatedUV;
 out vec3 interpolatedNormal;
 out vec3 interpolatedViewDir;
 void main() {
     gl_Position = MVP * vec4(position,1.0);
-    interpolatedPos = MV * vec4(position,1.0); //camera space coordinates
+    interpolatedPos = vec3(M * vec4(position,1.0)); //camera space coordinates
+
     interpolatedUV = uv;
     interpolatedNormal = normalize(NormalM * normal);
-    interpolatedViewDir =  normalize( vec3(-interpolatedPos));
+    //interpolatedNormal = normalize( normal);
+    //interpolatedNormal = normalize(NormalM * vec3(0.0,1.0,0.0));
+    interpolatedViewDir =  normalize(  vec3(-interpolatedPos));
 
 
 }

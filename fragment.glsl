@@ -7,13 +7,14 @@ struct LightSource {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
-    vec4 position; //in camera space coordinates
+    vec3 position; //in camera space coordinates
     vec3 direction;
     float attenuationConstant;
     float attenuationLinear;
     float attenuationQuadratic;
 };
 
+uniform vec3 cameraWorldPos;
 
 uniform vec3 Ka;
 uniform vec3 Kd;
@@ -21,6 +22,7 @@ uniform vec3 Ks;
 uniform float specularExponent;
 
 uniform mat3 NormalM;
+uniform mat4 MV;
 
 
 uniform int lightCount;
@@ -30,7 +32,7 @@ uniform LightSource lights[maxLightCount];
 
 in vec2 interpolatedUV;
 in vec3 interpolatedNormal;
-in vec4 interpolatedPos; // in camera space coordinates
+in vec3 interpolatedPos; // in camera space coordinates
 in vec3 interpolatedViewDir;
 //texture information: in which layer this fragment has to lookup the texture?
 uniform float diffuseTextureArrayIndex;
@@ -60,15 +62,21 @@ void main() {
     for(int i = 0; i < lightCount; i++) {
         //lights
         float dist = distance(interpolatedPos,lights[i].position);
+
         float atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * dist + lights[i].attenuationQuadratic * dist*dist);
+
         //light direction (point light!)
-        vec3 l = vec3(normalize(lights[i].position - interpolatedPos));
-        vec3 v = normalize(interpolatedViewDir);
+        vec3 l = normalize(lights[i].position - interpolatedPos); // world coordinate direction
+        //vec3 l = vec3(normalize(interpolatedPos -lights[i].position)); // world coordinate direction
+        vec3 v = normalize(cameraWorldPos - interpolatedPos); //world coordinate direction
         vec3 n = normalize(interpolatedNormal);
+
         float NL = dot(n , l);
         //NL is negative -> do not contribute negative values
         if(NL > 0.0) {
-            vec3 rl = 2 * n * NL - l;
+            //vec3 rl = reflect(l, n);
+            //d−2(d⋅n)n
+            vec3 rl = normalize ( -l - 2 * dot(-l , n) * n );
             float RLV = max(dot(rl,v),0.0);
             vec3 d = (Kd * lights[i].diffuse);
             vec3 a = (Ka * lights[i].ambient);
@@ -77,7 +85,7 @@ void main() {
             d *= atten;
             a *= atten;
             s *= pow(RLV,specularExponent);
-            //s *= atten;
+            s *= atten;
             diffContr += vec4(d,1.0);
             ambContr += vec4(a,1.0);
             specContr += vec4(s,1.0);

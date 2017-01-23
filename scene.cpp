@@ -231,7 +231,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             aiLight* li = s->mLights[i];
             //position and direction are stored in the accordin node!
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].position").toStdString().c_str(),
-                                          viewMatrix.map(QVector4D(li->mPosition.x,li->mPosition.y,li->mPosition.z,1.0f)) ); //world coordinates
+                                          (QVector3D(li->mPosition.x,li->mPosition.y,li->mPosition.z)) ); //world coordinates
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].direction").toStdString().c_str(),
                                           QVector3D(li->mDirection.x,li->mDirection.y,li->mDirection.z));
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].ambient").toStdString().c_str(),
@@ -249,10 +249,6 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
         }
     }
 
-    //set camera direction for fragment shader
-
-
-
 
 
     //go through all nodes (EXACTLY AS THEY WERE LOADED INTO THE VERTEX BUFFER)
@@ -267,7 +263,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
         //qDebug() << QString(node->mName.data) << node->mTransformation.a4 <<node->mTransformation.b4 <<node->mTransformation.c4 <<node->mTransformation.d4  ;
         QMatrix4x4 modelMatrix =  QMatrix4x4(node->mTransformation[0]);
         QMatrix4x4 modelViewMatrix = viewMatrix * modelMatrix;
-        QMatrix3x3 n = modelViewMatrix.normalMatrix();
+        QMatrix3x3 n = modelMatrix.normalMatrix(); // lighting is calculated in world space
         QMatrix4x4 vp = projMatrix * viewMatrix;
         QMatrix4x4 mvp = vp * modelMatrix;
         withProgram->setUniformValue( "M", modelMatrix );
@@ -288,13 +284,11 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             aiColor3D ks (0.f,0.f,0.f);
             float shininess = 1.0f;
             aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
-            //qDebug() << "vertex " <<   modelMatrix.map (QVector4D(mesh->mVertices[0].x,mesh->mVertices[0].y,mesh->mVertices[0].z,1.0f));
 
             mat->Get( AI_MATKEY_COLOR_AMBIENT, ka);
             mat->Get( AI_MATKEY_COLOR_DIFFUSE, kd);
             mat->Get( AI_MATKEY_COLOR_SPECULAR, ks);
             mat->Get( AI_MATKEY_SHININESS, shininess );
-            //qDebug() << "shininess  " << shininess;
 
             withProgram->setUniformValue("Ka",QVector3D(ka.r,ka.g,ka.b));
             withProgram->setUniformValue("Kd",QVector3D(kd.r,kd.g,kd.b));

@@ -1,11 +1,11 @@
 #ifndef CANONICALGLWINDOWIMPL_H
 #define CANONICALGLWINDOWIMPL_H
 #include <QOpenGLWindow>
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLShaderProgram>
 #include "scenemanager.h"
 #include <QKeyEvent>
-class CanonicalGLWindowImpl : public QOpenGLWindow, protected QOpenGLFunctions
+class CanonicalGLWindowImpl : public QOpenGLWindow, protected QOpenGLFunctions_4_1_Core
 {
 public:
     CanonicalGLWindowImpl();

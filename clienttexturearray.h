@@ -3,8 +3,7 @@
 #include "clienttexture.h"
 #include <QMap>
 #include <QVector>
-#include <QOpenGLFunctions>
-
+#include <QOpenGLFunctions_4_1_Core>
 class ClientTextureArray
 {
 public:

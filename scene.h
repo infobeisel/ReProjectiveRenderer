@@ -5,7 +5,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
-#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
@@ -25,14 +25,14 @@ class Scene
     };
 
 public:
-    Scene(QString fullPath,QOpenGLFunctions* tgl);
+    Scene(QString fullPath,QOpenGLFunctions_4_1_Core* tgl);
     ~Scene();
     void load(QOpenGLShaderProgram *toProgram); //loads the model into client side ram and then into server side buffer objects
     void bind(QOpenGLShaderProgram *toProgram); //bind everything and set attribute pointers
     //draw this scene
     void draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix);
 private:
-    QOpenGLFunctions* gl;//reference to the (already initialized! when this is constructed) OpenGl functions
+    QOpenGLFunctions_4_1_Core* gl;//reference to the (already initialized! when this is constructed) OpenGl functions
     QOpenGLVertexArrayObject vertexArrayObject;
     QOpenGLBuffer vertexBufferObject;
     QOpenGLBuffer normalBufferObject;

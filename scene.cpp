@@ -4,7 +4,7 @@
 
 
 
-Scene::Scene(QString fullPath,QOpenGLFunctions* tgl)
+Scene::Scene(QString fullPath,QOpenGLFunctions_4_1_Core* tgl)
 {
     gl = tgl;
     int i = fullPath.lastIndexOf("/");

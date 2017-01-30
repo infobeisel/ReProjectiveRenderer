@@ -48,7 +48,7 @@ ClientTextureArray* ClientTextureArrayManager::getTextureArray(QString toTexture
     return 0; //not yet added
 }
 
-void ClientTextureArrayManager::loadToServer(QOpenGLFunctions* tgl) {
+void ClientTextureArrayManager::loadToServer(QOpenGLFunctions_4_1_Core* tgl) {
     gl = tgl;
     int texArrayCount = texResToArray.size(); // texture array count to create
     texArrays = QVector<GLuint>(texArrayCount);

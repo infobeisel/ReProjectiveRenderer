@@ -74,7 +74,7 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions_4_1_Core* tgl) {
         }
 
 
-        glTexImage3D (GL_TEXTURE_2D_ARRAY, 0,  internalFormat , clientArray->getWidth(), clientArray->getHeight(),
+        gl->glTexImage3D (GL_TEXTURE_2D_ARRAY, 0,  internalFormat , clientArray->getWidth(), clientArray->getHeight(),
             clientArray->getDepth(), 0, format, GL_UNSIGNED_BYTE, 0);
 
         for(int imgi = 0; imgi<clientArray->getDepth(); imgi++) { //add each texture to the texture array
@@ -85,7 +85,7 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions_4_1_Core* tgl) {
              * zoffset means layer, depth (probably) means mip map level(?)
              * */
             ClientTexture* clientTex = clientArray->getTexture(imgi);
-            glTexSubImage3D(t_target,
+            gl->glTexSubImage3D(t_target,
                             0,
                             0,0,imgi,
                             clientTex->width(),clientTex->height(),1,

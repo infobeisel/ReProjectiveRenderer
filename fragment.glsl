@@ -20,6 +20,7 @@ uniform vec3 Ka;
 uniform vec3 Kd;
 uniform vec3 Ks;
 uniform float specularExponent;
+uniform float transparency;
 
 uniform mat3 NormalM;
 uniform mat4 MV;
@@ -91,6 +92,9 @@ void main() {
             specContr += vec4(s,1.0);
         }
     }
-    colour = specContr * textureColorSpec + ambContr * textureColorAmb +  diffContr * textureColorDif;
+    vec4 tColour = specContr * textureColorSpec + ambContr * textureColorAmb +  diffContr * textureColorDif;
+    tColour.a = transparency;
+    if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
+    colour = tColour;
 
 }

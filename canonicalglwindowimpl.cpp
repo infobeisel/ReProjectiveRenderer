@@ -43,7 +43,11 @@ void CanonicalGLWindowImpl::initializeGL() {
 
     //will be modified later
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    //glDisable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE); //backface culling
     glClearColor(.9f, .9f, .93f ,1.0f);
+
 
     //load models
     std::ifstream in("scenelocation");
@@ -80,8 +84,12 @@ void CanonicalGLWindowImpl::paintGL() {
 
     //tell the shader the camera world pos
     shaderProgram.setUniformValue("cameraWorldPos",cameraPosition);
+    glDisable(GL_BLEND);
+    scene->draw(&shaderProgram,view,projection, OPAQUE);
+    glEnable(GL_BLEND);
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    scene->draw(&shaderProgram,view,projection, TRANSPARENT);
 
-    scene->draw(&shaderProgram,view,projection);
     handleCursor(&view);
     //trigger an update so that this function gets called the next frame again
     QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));

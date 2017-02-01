@@ -220,7 +220,7 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
     vertexArrayObject.release();
 }
 
-void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix){
+void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix, materialClassifier materialTypes){
     vertexArrayObject.bind();
 
     //tell the shader how many light sources there are
@@ -254,10 +254,11 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
     //go through all nodes (EXACTLY AS THEY WERE LOADED INTO THE VERTEX BUFFER)
     //array to traverse the node tree
     QVector<aiNode*> nodes;
+    nodes = QVector<aiNode*>();
     nodes.push_back(s->mRootNode);
 
     int indexOffsetCounter = 0;
-    while(nodes.size() != 0) {
+    while(nodes.size() != 0 ) {
         //handle current node
         aiNode* node = nodes.takeFirst();
         //qDebug() << QString(node->mName.data) << node->mTransformation.a4 <<node->mTransformation.b4 <<node->mTransformation.c4 <<node->mTransformation.d4  ;
@@ -283,44 +284,61 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             aiColor3D kd (0.f,0.f,0.f);
             aiColor3D ks (0.f,0.f,0.f);
             float shininess = 1.0f;
+            float opacity = 1.0f;
             aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
 
             mat->Get( AI_MATKEY_COLOR_AMBIENT, ka);
             mat->Get( AI_MATKEY_COLOR_DIFFUSE, kd);
             mat->Get( AI_MATKEY_COLOR_SPECULAR, ks);
             mat->Get( AI_MATKEY_SHININESS, shininess );
-
-            withProgram->setUniformValue("Ka",QVector3D(ka.r,ka.g,ka.b));
-            withProgram->setUniformValue("Kd",QVector3D(kd.r,kd.g,kd.b));
-            withProgram->setUniformValue("Ks",QVector3D(ks.r,ks.g,ks.b));
-            withProgram->setUniformValue("specularExponent",shininess);
-
-            //set texture parameters
-            aiString tpath;
-            if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-                textureManager->bindLoadedTexture(QString(tpath.data),&"diffuseSampler"[0],&"diffuseTextureArrayIndex"[0],withProgram);
-            } else
-                textureManager->bindLoadedTexture(QString(tpath.data),&"diffuseSampler"[0],&"diffuseTextureArrayIndex"[0],withProgram);
-
-            if (mat->GetTexture(aiTextureType_AMBIENT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-                textureManager->bindLoadedTexture(QString(tpath.data),&"ambientSampler"[0],&"ambientTextureArrayIndex"[0],withProgram);
-            } else
-                textureManager->bindLoadedTexture(QString(tpath.data),&"ambientSampler"[0],&"ambientTextureArrayIndex"[0],withProgram);
-
-            if (mat->GetTexture(aiTextureType_SPECULAR, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-                textureManager->bindLoadedTexture(QString(tpath.data),&"specularSampler"[0],&"specularTextureArrayIndex"[0],withProgram);
-            } else
-                textureManager->bindLoadedTexture(QString(tpath.data),&"specularSampler"[0],&"specularTextureArrayIndex"[0],withProgram);
-
-            if (mat->GetTexture(aiTextureType_HEIGHT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-                textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
-            } else
-                textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
+            //blender exports transparency to opacity...?
+            mat->Get( AI_MATKEY_OPACITY/*COLOR_TRANSPARENT*/, opacity );
+            //if it's 0.0 or 1.0, the returned value will be 0, otherwise it will be the opacity!
+            opacity = opacity == 0.0f ? 1.0f : opacity;
+            float transparency = opacity == 1.0f ? 0.0f :  1.0f - opacity;
 
 
-            //assume triangles
             int count = mesh->mNumFaces * 3; //faces are triangles (assumption)
-            gl->glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_INT,(const void*)(indexOffsetCounter * sizeof(unsigned int)) );
+
+
+            //if mesh is transparent and transparent objects should be drawn or the mesh is opaque and opaque objects should be drawn
+            if( (transparency == 0.0f && (materialTypes & OPAQUE) != 0)
+              ||(transparency != 0.0f && (materialTypes & TRANSPARENT) != 0) )
+            {
+                withProgram->setUniformValue("Ka",QVector3D(ka.r,ka.g,ka.b));
+                withProgram->setUniformValue("Kd",QVector3D(kd.r,kd.g,kd.b));
+                withProgram->setUniformValue("Ks",QVector3D(ks.r,ks.g,ks.b));
+                withProgram->setUniformValue("specularExponent",shininess);
+                withProgram->setUniformValue("transparency",transparency);
+
+                //set texture parameters
+                aiString tpath;
+                if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"diffuseSampler"[0],&"diffuseTextureArrayIndex"[0],withProgram);
+                } else
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"diffuseSampler"[0],&"diffuseTextureArrayIndex"[0],withProgram);
+
+                if (mat->GetTexture(aiTextureType_AMBIENT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"ambientSampler"[0],&"ambientTextureArrayIndex"[0],withProgram);
+                } else
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"ambientSampler"[0],&"ambientTextureArrayIndex"[0],withProgram);
+
+                if (mat->GetTexture(aiTextureType_SPECULAR, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"specularSampler"[0],&"specularTextureArrayIndex"[0],withProgram);
+                } else
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"specularSampler"[0],&"specularTextureArrayIndex"[0],withProgram);
+
+                if (mat->GetTexture(aiTextureType_HEIGHT, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
+                } else
+                    textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
+
+
+
+                gl->glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_INT,(const void*)(indexOffsetCounter * sizeof(unsigned int)) );
+
+            }
+
             indexOffsetCounter += count; //move offset
         }
         //add all children

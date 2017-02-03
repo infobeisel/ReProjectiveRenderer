@@ -1,3 +1,4 @@
+#include "openglfunctions.h"
 #include "canonicalglwindowimpl.h"
 #include "scene.h"
 #include <QCoreApplication>
@@ -11,7 +12,6 @@ CanonicalGLWindowImpl::~CanonicalGLWindowImpl()
     delete scene;
 }
 void CanonicalGLWindowImpl::initializeGL() {
-    initializeOpenGLFunctions();
     QString vertexShaderPath = ":/vertex.glsl";
     QString fragmentShaderPath = ":/fragment.glsl";
     //compile shaders
@@ -42,11 +42,11 @@ void CanonicalGLWindowImpl::initializeGL() {
                 10000.0f);       // far clipping plane
 
     //will be modified later
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    GL.glEnable(GL_DEPTH_TEST);
+    GL.glDepthFunc(GL_LESS);
     //glDisable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE); //backface culling
-    glClearColor(.9f, .9f, .93f ,1.0f);
+    GL.glEnable(GL_CULL_FACE); //backface culling
+    GL.glClearColor(.9f, .9f, .93f ,1.0f);
 
 
     //load models
@@ -57,7 +57,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     QStringList paths = QString::fromStdString(contents).split("\n");
 
 
-    scene = new Scene(paths.at(0),this);
+    scene = new Scene(paths.at(0));
     scene->load(&shaderProgram);
     scene->bind(&shaderProgram);
 
@@ -84,11 +84,20 @@ void CanonicalGLWindowImpl::paintGL() {
 
     //tell the shader the camera world pos
     shaderProgram.setUniformValue("cameraWorldPos",cameraPosition);
+
+    //zPrepass
+
+    shaderProgram.setUniformValue("zPrepass",true);
+    scene->draw(&shaderProgram,view,projection, TRANSPARENT|OPAQUE);
+
+    //first draw opaque, then transparent
+    shaderProgram.setUniformValue("zPrepass",false);
     glDisable(GL_BLEND);
     scene->draw(&shaderProgram,view,projection, OPAQUE);
     glEnable(GL_BLEND);
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     scene->draw(&shaderProgram,view,projection, TRANSPARENT);
+
 
     handleCursor(&view);
     //trigger an update so that this function gets called the next frame again

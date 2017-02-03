@@ -3,7 +3,6 @@
 #include <QDebug>
 ClientTextureArrayManager::ClientTextureArrayManager()
 {
-    gl = 0;
 }
 
 ClientTextureArrayManager::~ClientTextureArrayManager()
@@ -15,7 +14,7 @@ ClientTextureArrayManager::~ClientTextureArrayManager()
         ++i;
     }
     //delete opengl server memory
-    gl->glDeleteTextures(texArrays.size(),texArrays.data());
+    GL.glDeleteTextures(texArrays.size(),texArrays.data());
 
 }
 void ClientTextureArrayManager::addImage(QString tname, QImage* timg) {
@@ -48,11 +47,10 @@ ClientTextureArray* ClientTextureArrayManager::getTextureArray(QString toTexture
     return 0; //not yet added
 }
 
-void ClientTextureArrayManager::loadToServer(QOpenGLFunctions_4_1_Core* tgl) {
-    gl = tgl;
+void ClientTextureArrayManager::loadToServer() {
     int texArrayCount = texResToArray.size(); // texture array count to create
     texArrays = QVector<GLuint>(texArrayCount);
-    gl->glGenTextures(texArrayCount,texArrays.data());
+    GL.glGenTextures(texArrayCount,texArrays.data());
     QList<ClientTextureArray*> clientArrays = texResToArray.values();
 
     for(int i = 0 ; i < texArrayCount; i++) {
@@ -62,8 +60,8 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions_4_1_Core* tgl) {
         int textureUnitIndex = GL_TEXTURE0 + i;
         clientArray->setServerTextureName(texArray);
         clientArray->setTextureUnitIndex(textureUnitIndex);
-        gl->glActiveTexture(textureUnitIndex);
-        gl->glBindTexture(GL_TEXTURE_2D_ARRAY,texArray);
+        GL.glActiveTexture(textureUnitIndex);
+        GL.glBindTexture(GL_TEXTURE_2D_ARRAY,texArray);
 
         GLuint format = GL_BGRA;
         GLuint internalFormat = GL_RGBA;
@@ -74,7 +72,7 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions_4_1_Core* tgl) {
         }
 
 
-        gl->glTexImage3D (GL_TEXTURE_2D_ARRAY, 0,  internalFormat , clientArray->getWidth(), clientArray->getHeight(),
+        GL.glTexImage3D (GL_TEXTURE_2D_ARRAY, 0,  internalFormat , clientArray->getWidth(), clientArray->getHeight(),
             clientArray->getDepth(), 0, format, GL_UNSIGNED_BYTE, 0);
 
         for(int imgi = 0; imgi<clientArray->getDepth(); imgi++) { //add each texture to the texture array
@@ -85,32 +83,31 @@ void ClientTextureArrayManager::loadToServer(QOpenGLFunctions_4_1_Core* tgl) {
              * zoffset means layer, depth (probably) means mip map level(?)
              * */
             ClientTexture* clientTex = clientArray->getTexture(imgi);
-            gl->glTexSubImage3D(t_target,
+            GL.glTexSubImage3D(t_target,
                             0,
                             0,0,imgi,
                             clientTex->width(),clientTex->height(),1,
                             format,         // format
                             GL_UNSIGNED_BYTE, // type
                             clientTex->image()->bits());
-            gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-            gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-            gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_REPEAT);
-            gl->glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_REPEAT);
+            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_REPEAT);
+            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_REPEAT);
         }
-        gl->glBindTexture(GL_TEXTURE_2D_ARRAY, 0); //unbind
+        GL.glBindTexture(GL_TEXTURE_2D_ARRAY, 0); //unbind
 
     }
 }
 
 void ClientTextureArrayManager::bindLoadedTexture(QString tName,const char* samplerName,const char* arrayIndexVariableName, QOpenGLShaderProgram* withProgram) {
 
-    if(gl==0) return;
 
     ClientTextureArray* arr = getTextureArray(tName);
     if(arr != 0) {
         ClientTexture* tex = arr->getTexture(tName);
-        gl->glActiveTexture(arr->getTextureUnitIndex());
-        gl->glBindTexture(GL_TEXTURE_2D_ARRAY,arr->getServerTextureName());
+        GL.glActiveTexture(arr->getTextureUnitIndex());
+        GL.glBindTexture(GL_TEXTURE_2D_ARRAY,arr->getServerTextureName());
         withProgram->setUniformValue(samplerName , arr->getTextureUnitIndex() - GL_TEXTURE0 ); //has to be 0 or 1 or ...
         withProgram->setUniformValue(arrayIndexVariableName,(float)tex->getIndex()); //index for the texture array
     }

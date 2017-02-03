@@ -15,13 +15,12 @@ public:
     ~ClientTextureArrayManager();
     void addImage(QString name, QImage* timg);
     //only call this once to load all gathered texture data to the opengl server
-    void loadToServer(QOpenGLFunctions_4_1_Core* tgl);
+    void loadToServer();
     //prepares sampler with given sampler name to read from texture with given texture name
     void bindLoadedTexture(QString tName,const char* samplerName,const  char* arrayIndexName,QOpenGLShaderProgram* withProgram);
     ClientTextureArray* getTextureArray(QString toTextureName);
 private:
     QMap<QString,ClientTextureArray*> texResToArray;
-    QOpenGLFunctions_4_1_Core* gl;
     QVector<GLuint> texArrays;
 };
 

@@ -40,7 +40,8 @@ HEADERS += \
     scene.h \
     clienttexturearraymanager.h \
     clienttexturearray.h \
-    clienttexture.h
+    clienttexture.h \
+    openglfunctions.h
 
 #added assimp as external library in the project directory...
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/assimp/lib/release/ -lassimp

@@ -1,9 +1,10 @@
 #ifndef CLIENTTEXTUREARRAY_H
 #define CLIENTTEXTUREARRAY_H
 #include "clienttexture.h"
+#include "openglfunctions.h"
 #include <QMap>
 #include <QVector>
-#include <QOpenGLFunctions_4_1_Core>
+
 class ClientTextureArray
 {
 public:

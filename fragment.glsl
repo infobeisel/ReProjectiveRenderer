@@ -14,6 +14,9 @@ struct LightSource {
     float attenuationQuadratic;
 };
 
+uniform bool zPrepass;
+
+
 uniform vec3 cameraWorldPos;
 
 uniform vec3 Ka;
@@ -46,6 +49,10 @@ uniform float bumpTextureArrayIndex;
 uniform sampler2DArray bumpSampler;
 
 void main() {
+
+    if(zPrepass) discard;
+
+
     vec4 textureColorAmb = vec4(0.0);
     vec4 textureColorDif = vec4(0.0);
     vec4 textureColorSpec = vec4(0.0);

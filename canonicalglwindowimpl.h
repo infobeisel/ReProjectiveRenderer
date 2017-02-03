@@ -5,7 +5,7 @@
 #include <QOpenGLShaderProgram>
 #include "scenemanager.h"
 #include <QKeyEvent>
-class CanonicalGLWindowImpl : public QOpenGLWindow, protected QOpenGLFunctions_4_1_Core
+class CanonicalGLWindowImpl : public QOpenGLWindow
 {
 public:
     CanonicalGLWindowImpl();

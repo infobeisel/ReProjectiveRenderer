@@ -30,14 +30,13 @@ class Scene
     };
 
 public:
-    Scene(QString fullPath,QOpenGLFunctions_4_1_Core* tgl);
+    Scene(QString fullPath);
     ~Scene();
     void load(QOpenGLShaderProgram *toProgram); //loads the model into client side ram and then into server side buffer objects
     void bind(QOpenGLShaderProgram *toProgram); //bind everything and set attribute pointers
     //draw this scene
     void draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix,materialClassifier materialTypes);
 private:
-    QOpenGLFunctions_4_1_Core* gl;//reference to the (already initialized! when this is constructed) OpenGl functions
     QOpenGLVertexArrayObject vertexArrayObject;
     QOpenGLBuffer vertexBufferObject;
     QOpenGLBuffer normalBufferObject;

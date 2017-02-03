@@ -4,9 +4,8 @@
 
 
 
-Scene::Scene(QString fullPath,QOpenGLFunctions_4_1_Core* tgl)
+Scene::Scene(QString fullPath)
 {
-    gl = tgl;
     int i = fullPath.lastIndexOf("/");
     basePath = fullPath.left(i+1);
     name = fullPath.right(fullPath.size() -  i - 1);
@@ -179,7 +178,7 @@ void Scene::load(QOpenGLShaderProgram *toProgram) {
         }
     }
 
-    textureManager->loadToServer(gl);
+    textureManager->loadToServer();
 
 
 
@@ -335,7 +334,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
 
 
 
-                gl->glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_INT,(const void*)(indexOffsetCounter * sizeof(unsigned int)) );
+                GL.glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_INT,(const void*)(indexOffsetCounter * sizeof(unsigned int)) );
 
             }
 

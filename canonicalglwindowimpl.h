@@ -5,6 +5,9 @@
 #include <QOpenGLShaderProgram>
 #include "scenemanager.h"
 #include <QKeyEvent>
+#include "canonicalmonoscopicrenderer.h"
+#include "canonicalstereoscopicrenderer.h"
+
 class CanonicalGLWindowImpl : public QOpenGLWindow
 {
 public:
@@ -21,10 +24,8 @@ protected:
     void initializeGL() ;
     void resizeGL(int w, int h) ;
 private:
-    //gl attributes
-    QOpenGLShaderProgram shaderProgram;
-    QMatrix4x4 view;
-    QMatrix4x4 projection;
+    CanonicalStereoscopicRenderer renderer;
+
     //camera movement
     QVector3D cameraPosition;
     QVector3D moveDir; //Vector that shows into the world coordinate direction (depending to wasd keys), where to move the camera

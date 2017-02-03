@@ -12,42 +12,8 @@ CanonicalGLWindowImpl::~CanonicalGLWindowImpl()
     delete scene;
 }
 void CanonicalGLWindowImpl::initializeGL() {
-    QString vertexShaderPath = ":/vertex.glsl";
-    QString fragmentShaderPath = ":/fragment.glsl";
-    //compile shaders
-    if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath.toUtf8() ) ) {
-        qDebug() << "ERROR (vertex shader):" << shaderProgram.log();
-    }
-    if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Fragment, fragmentShaderPath.toUtf8() ) ) {
-        qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
-    }
-    if ( !shaderProgram.link() ) {
-        qDebug() << "ERROR linking shader program:" << shaderProgram.log();
-    }
-    shaderProgram.bind();
 
-    //configure view & projection matrix
-    view.setToIdentity();
-    view.lookAt(
-                QVector3D(0.0f, 0.0f, 0.0f),    // Camera Position
-                QVector3D(0.0f, 0.0f, -1.0f),    // Point camera looks towards
-                QVector3D(0.0f, 1.0f, 0.0f));   // Up vector
-
-    float aspect = 4.0f/3.0f;
-    projection.setToIdentity();
-    projection.perspective(
-                60.0f,          // field of vision
-                aspect,         // aspect ratio
-                0.3f,           // near clipping plane
-                10000.0f);       // far clipping plane
-
-    //will be modified later
-    GL.glEnable(GL_DEPTH_TEST);
-    GL.glDepthFunc(GL_LESS);
-    //glDisable(GL_DEPTH_TEST);
-    GL.glEnable(GL_CULL_FACE); //backface culling
-    GL.glClearColor(.9f, .9f, .93f ,1.0f);
-
+    renderer.initialize();
 
     //load models
     std::ifstream in("scenelocation");
@@ -58,8 +24,8 @@ void CanonicalGLWindowImpl::initializeGL() {
 
 
     scene = new Scene(paths.at(0));
-    scene->load(&shaderProgram);
-    scene->bind(&shaderProgram);
+    scene->load(&renderer.shaderProgram);
+    scene->bind(&renderer.shaderProgram);
 
     //movement
     lastCursorPos = QVector<int>();
@@ -74,8 +40,10 @@ void CanonicalGLWindowImpl::initializeGL() {
 
 void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     glViewport( 0, 0, w, h );
-    projection.setToIdentity();
-    projection.perspective(60.0f, (float)w/h, 0.3f, 10000);
+    QMatrix4x4 nProj = QMatrix4x4();
+    nProj.setToIdentity();
+    nProj.perspective(60.0f, (float)w/h, 0.3f, 10000);
+    renderer.setProjectionMatrix(nProj);
 }
 
 void CanonicalGLWindowImpl::paintGL() {
@@ -83,23 +51,13 @@ void CanonicalGLWindowImpl::paintGL() {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //tell the shader the camera world pos
-    shaderProgram.setUniformValue("cameraWorldPos",cameraPosition);
+    renderer.setCameraPosition(cameraPosition);
+    QMatrix4x4 nView = QMatrix4x4();
+    handleCursor(&nView);
+    renderer.setViewMatrix(nView);
 
-    //zPrepass
+    renderer.draw(scene);
 
-    shaderProgram.setUniformValue("zPrepass",true);
-    scene->draw(&shaderProgram,view,projection, TRANSPARENT|OPAQUE);
-
-    //first draw opaque, then transparent
-    shaderProgram.setUniformValue("zPrepass",false);
-    glDisable(GL_BLEND);
-    scene->draw(&shaderProgram,view,projection, OPAQUE);
-    glEnable(GL_BLEND);
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    scene->draw(&shaderProgram,view,projection, TRANSPARENT);
-
-
-    handleCursor(&view);
     //trigger an update so that this function gets called the next frame again
     QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
 }

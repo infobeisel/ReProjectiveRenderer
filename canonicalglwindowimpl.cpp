@@ -39,7 +39,7 @@ void CanonicalGLWindowImpl::initializeGL() {
 }
 
 void CanonicalGLWindowImpl::resizeGL(int w, int h) {
-    glViewport( 0, 0, w, h );
+    GL.glViewport( 0, 0, w, h );
     QMatrix4x4 nProj = QMatrix4x4();
     nProj.setToIdentity();
     nProj.perspective(60.0f, (float)w/h, 0.3f, 10000);
@@ -47,11 +47,12 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
 }
 
 void CanonicalGLWindowImpl::paintGL() {
-    // Clear color and depth buffers
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //tell the shader the camera world pos
     renderer.setCameraPosition(cameraPosition);
+    renderer.setCameraOrientation(cameraOrientation);
+
+
     QMatrix4x4 nView = QMatrix4x4();
     handleCursor(&nView);
     renderer.setViewMatrix(nView);
@@ -84,6 +85,8 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
     //move the camera
     cameraPosition += moveDir.z() * forward;
     cameraPosition += moveDir.x() * right;
+
+    cameraOrientation = qx * qy;
 
     affect->setToIdentity();
     affect->lookAt(cameraPosition,cameraPosition + forward,up);

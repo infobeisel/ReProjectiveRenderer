@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     CanonicalGLWindowImpl *modelWindow = 0;
     modelWindow = new CanonicalGLWindowImpl();
     modelWindow->setFormat(format);
-    modelWindow->resize(2048,1024);
+    modelWindow->resize(1024,512);
     modelWindow->show();
     return a.exec();
 }

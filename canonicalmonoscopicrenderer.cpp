@@ -11,10 +11,14 @@ void CanonicalMonoscopicRenderer::setCameraPosition(QVector3D p) {
     shaderProgram.setUniformValue("cameraWorldPos",cameraPosition);
 }
 
+void CanonicalMonoscopicRenderer::setCameraOrientation(QQuaternion p) {
+    cameraOrientation = p;
+}
+
 void CanonicalMonoscopicRenderer::draw(Scene* s) {
 
     // Clear color and depth buffers
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //zPrepass
 
     shaderProgram.setUniformValue("zPrepass",true);
@@ -22,10 +26,10 @@ void CanonicalMonoscopicRenderer::draw(Scene* s) {
 
     //first draw opaque, then transparent
     shaderProgram.setUniformValue("zPrepass",false);
-    glDisable(GL_BLEND);
+    GL.glDisable(GL_BLEND);
     s->draw(&shaderProgram,view,projection, OPAQUE);
-    glEnable(GL_BLEND);
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL.glEnable(GL_BLEND);
+    GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,view,projection, TRANSPARENT);
 
 }

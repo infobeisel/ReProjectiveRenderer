@@ -28,6 +28,7 @@ private:
 
     //camera movement
     QVector3D cameraPosition;
+    QQuaternion cameraOrientation;
     QVector3D moveDir; //Vector that shows into the world coordinate direction (depending to wasd keys), where to move the camera
     QVector<int> lastCursorPos;//member to calculate the mouse movement since last frame
     QVector<float> viewAngles; //x-axis and y-axis angles in degrees

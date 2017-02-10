@@ -32,6 +32,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
     GL.glViewport( 0, 0,512,256 );
     view.translate( cameraOrientation.rotatedVector( QVector3D(-eyeSeparation / 2.0f,0.0f,0.0f) ));
+    setCameraPosition(cameraPosition - QVector3D(-eyeSeparation / 2.0f,0.0f,0.0f));
     shaderProgram.setUniformValue( "V", view );
 
     //perform z prepass
@@ -57,6 +58,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,512,256 );
     view.translate( cameraOrientation.rotatedVector( QVector3D(eyeSeparation,0.0f,0.0f) ));
+    setCameraPosition(cameraPosition - QVector3D(eyeSeparation,0.0f,0.0f));
     shaderProgram.setUniformValue( "V", view );
     shaderProgram.setUniformValue("zPrepass",true);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );

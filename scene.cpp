@@ -23,6 +23,11 @@ Scene::~Scene()
  * NOTE: assumes 1 uv channel for each vertex, ignores the rest (during rendering the same uv coord is used for every texture lookup, if a mesh has multiple textures)
  */
 void Scene::load(QOpenGLShaderProgram *toProgram) {
+
+    transparentNodes = QVector<Node>();
+    opaqueNodes = QVector<Node>();
+
+
     QString path = basePath + name;
     //importer and scene are both held as member to avoid scene deletion (due to importer deallocation)
     s = importer.ReadFile( path.toStdString(),aiProcessPreset_TargetRealtime_Quality);
@@ -52,6 +57,7 @@ void Scene::load(QOpenGLShaderProgram *toProgram) {
     //array to traverse the node tree
     QVector<aiNode*> nodes;
     nodes.push_back(s->mRootNode);
+    int indexOffsetCounter = 0; //hold the current index offset
     while(nodes.size() != 0) {
         //handle current node
         aiNode* node = nodes.takeFirst();
@@ -68,12 +74,47 @@ void Scene::load(QOpenGLShaderProgram *toProgram) {
                 li->mDirection = aiVector3D(dir.x(),dir.y(),dir.z());
             }
         }
+
+        //flags to make sure every node stored only one time in the opaque nodes array and one time in the transparent node array
+        //(NOTE: like this a mixed node gets stored in both arrays)
+        bool storedNodeTransparent = false;
+        bool storedNodeOpaque = false;
+
         for(uint i = 0; i<node->mNumMeshes; i++) { //go through this node's meshes
             //the mesh taken from the scene meshes array with the indices provided in the node
             aiMesh* mesh = s->mMeshes[node->mMeshes[i]];
             // the offset which should be added on the indices
             // (to let them point on the correct place in the vertex array)
             int offset = vertices.size()/3;
+
+            //store the node as transparent or opaque, for more efficient rendering later (not the whole node tree has to be traversed for drawing a few transparent (/opaque) objects)
+            int count = mesh->mNumFaces * 3; //the index offset add
+            aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
+            //blender exports transparency to opacity...?
+            float opacity = 1.0f;
+            mat->Get( AI_MATKEY_OPACITY/*COLOR_TRANSPARENT*/, opacity );
+            //if it's 0.0 or 1.0, the returned value will be 0, otherwise it will be the opacity!
+            opacity = opacity == 0.0f ? 1.0f : opacity;
+            float transparency = opacity == 1.0f ? 0.0f :  1.0f - opacity;
+            if        (transparency == 0.0f && !storedNodeOpaque) {
+                storedNodeOpaque = true;
+                Node n = { };
+                n.assimpNode = node;
+                n.indexBufferOffset = indexOffsetCounter;
+                n.indexCount = count;
+                opaqueNodes.push_back(n);
+
+            } else if (transparency != 0.0f && !storedNodeTransparent){
+                storedNodeTransparent = true;
+                Node n = { };
+                n.assimpNode = node;
+                n.indexBufferOffset = indexOffsetCounter;
+                n.indexCount = count;
+                transparentNodes.push_back(n);
+            }
+
+
+
             if(mesh->mNumVertices > 0) {//add vertices, indices and normals
                 for(uint j=0; j<mesh->mNumVertices; j++) {
                     aiVector3D &vec = mesh->mVertices[j];
@@ -116,6 +157,8 @@ void Scene::load(QOpenGLShaderProgram *toProgram) {
                 }
 
             }
+
+            indexOffsetCounter += count; //move index offset
         }
         //add all children
         for(uint k = 0; k < node->mNumChildren; k++)

@@ -1,4 +1,4 @@
-#version 330 core
+#version 410 core
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 uv;
@@ -12,12 +12,14 @@ uniform mat4 VP;
 uniform mat3 NormalM;
 
 out vec3 interpolatedPos;
+out vec4 cameraSpacePos;
 out vec2 interpolatedUV;
 out vec3 interpolatedNormal;
 out vec3 interpolatedViewDir;
 void main() {
     gl_Position = MVP * vec4(position,1.0);
-    interpolatedPos = vec3(M * vec4(position,1.0)); //camera space coordinates
+    cameraSpacePos = MV * vec4(position,1.0);
+    interpolatedPos = vec3(M * vec4(position,1.0));
 
     interpolatedUV = uv;
     interpolatedNormal = normalize(NormalM * normal);

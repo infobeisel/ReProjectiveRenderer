@@ -3,6 +3,8 @@
 
 #include "canonicalmonoscopicrenderer.h"
 
+
+
 class CanonicalStereoscopicRenderer : public CanonicalMonoscopicRenderer
 {
 public:
@@ -11,9 +13,12 @@ public:
     void draw(Scene* s) override;
     void initialize() override;
 private:
-    //right eye
-    GLuint rightFBO;
-    GLuint rightRenderbuffer;
+    enum {ColorLeft, ColorRight,ReprojectedX,  Depth, Stencil, NumRenderbuffers};
+
+
+    GLuint fbo;
+    GLuint renderbuffers[NumRenderbuffers];
+
 
 };
 

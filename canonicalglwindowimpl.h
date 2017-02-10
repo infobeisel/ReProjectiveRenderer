@@ -7,7 +7,7 @@
 #include <QKeyEvent>
 #include "canonicalmonoscopicrenderer.h"
 #include "canonicalstereoscopicrenderer.h"
-
+ #include <QElapsedTimer>
 class CanonicalGLWindowImpl : public QOpenGLWindow
 {
 public:
@@ -18,7 +18,7 @@ public:
     void keyReleaseEvent(QKeyEvent *ev) override;
 protected:
     //
-    void paintGL() ;
+    void paintGL() override;
     //initializes opengl and loads shaders and loads the scene file according to the file "scenelocation" which should be
     //located in the execution directoy
     void initializeGL() ;
@@ -35,6 +35,7 @@ private:
     //the scene to be rendered
     Scene* scene;
 
+    QElapsedTimer timer;
     void handleCursor(QMatrix4x4* affect);//translates cursor movement into view matrix updates
 };
 #endif // CANONICALGLWINDOWIMPL_H

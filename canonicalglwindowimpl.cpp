@@ -12,7 +12,7 @@ CanonicalGLWindowImpl::~CanonicalGLWindowImpl()
     delete scene;
 }
 void CanonicalGLWindowImpl::initializeGL() {
-
+    timer.start();
     renderer.initialize();
 
     //load models
@@ -48,6 +48,8 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
 
 void CanonicalGLWindowImpl::paintGL() {
 
+    //qDebug() << (1000.0f / (float)timer.restart());
+
     //tell the shader the camera world pos
     renderer.setCameraPosition(cameraPosition);
     renderer.setCameraOrientation(cameraOrientation);
@@ -58,6 +60,7 @@ void CanonicalGLWindowImpl::paintGL() {
     renderer.setViewMatrix(nView);
 
     renderer.draw(scene);
+
 
     //trigger an update so that this function gets called the next frame again
     QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));

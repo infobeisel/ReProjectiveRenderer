@@ -29,6 +29,13 @@ class Scene
 
     };
 
+    struct Node {
+        aiNode* assimpNode;
+        int indexBufferOffset;
+        int indexCount;
+    };
+
+
 public:
     Scene(QString fullPath);
     ~Scene();
@@ -45,6 +52,13 @@ private:
     QOpenGLBuffer indexBufferObject;
     QString name; //name of the scene file
     QString basePath; //path to the scene file
+
+    //vector holding the opaque nodes
+    QVector<Node> transparentNodes;
+    QVector<Node> opaqueNodes;
+
+
+
 
     QMap<QString,int> lightSourceNameToLightArrayIndex;
     ClientTextureArrayManager* textureManager;

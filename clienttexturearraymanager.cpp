@@ -57,7 +57,7 @@ void ClientTextureArrayManager::loadToServer() {
 
         ClientTextureArray* clientArray = clientArrays.at(i);
         GLint texArray = texArrays[i];
-        int textureUnitIndex = GL_TEXTURE0 + i;
+        int textureUnitIndex = GL_TEXTURE0 + TEXTURE_UNIT_OFFSET + i;
         clientArray->setServerTextureName(texArray);
         clientArray->setTextureUnitIndex(textureUnitIndex);
         GL.glActiveTexture(textureUnitIndex);
@@ -108,7 +108,7 @@ void ClientTextureArrayManager::bindLoadedTexture(QString tName,const char* samp
         ClientTexture* tex = arr->getTexture(tName);
         GL.glActiveTexture(arr->getTextureUnitIndex());
         GL.glBindTexture(GL_TEXTURE_2D_ARRAY,arr->getServerTextureName());
-        withProgram->setUniformValue(samplerName , arr->getTextureUnitIndex() - GL_TEXTURE0 ); //has to be 0 or 1 or ...
+        withProgram->setUniformValue(samplerName , arr->getTextureUnitIndex() - GL_TEXTURE0); //has to be 0 or 1 or ...
         withProgram->setUniformValue(arrayIndexVariableName,(float)tex->getIndex()); //index for the texture array
     }
 

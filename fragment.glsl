@@ -1,6 +1,8 @@
-#version 330 core
+#version 410 core
 
-out vec4 colour;
+layout(location = 0) out vec4 colour;
+//layout(location = 1) out vec4 colourRight;
+//layout(location = 2) out float reprojection;
 
 
 struct LightSource {
@@ -13,10 +15,17 @@ struct LightSource {
     float attenuationLinear;
     float attenuationQuadratic;
 };
-
+//Stereoscopic related
 uniform bool zPrepass;
-
-
+uniform int eyeIndex;
+uniform float eyeSeparation;
+uniform mat4 V;
+uniform mat4 P;
+uniform float width;
+uniform float height;
+in vec4 cameraSpacePos;
+uniform sampler2D reprojectionCoordinateSampler;
+//---------------------
 uniform vec3 cameraWorldPos;
 
 uniform vec3 Ka;
@@ -29,14 +38,14 @@ uniform mat3 NormalM;
 uniform mat4 MV;
 
 
+
 uniform int lightCount;
 const int maxLightCount = 10;
 uniform LightSource lights[maxLightCount];
 
-
 in vec2 interpolatedUV;
 in vec3 interpolatedNormal;
-in vec3 interpolatedPos; // in camera space coordinates
+in vec3 interpolatedPos;
 in vec3 interpolatedViewDir;
 //texture information: in which layer this fragment has to lookup the texture?
 uniform float diffuseTextureArrayIndex;
@@ -50,58 +59,74 @@ uniform sampler2DArray bumpSampler;
 
 void main() {
 
-    if(zPrepass) discard;
+    if(zPrepass && eyeIndex == 0) {// left eye z prepass: depth values get written + write reprojected x screen coordinate in buffer
+        //reprojection
+        //left camera space position + translation resulting from eye separation = right camera space position
+        //vec4 rightCameraSpacePos = cameraSpacePos + vec4(eyeSeparation,0.0,0.0,1.0);
+        //projection * right camera space position = Clip coordinates (where x and y values are screen coordinates)
+       // vec4 clipSpacePosRightEye = P * rightCameraSpacePos;
+        colour = vec4((gl_FragCoord.x / width),0.0,0.0,1.0);//(gl_FragCoord.x / width); // write into COLOR_ATTACHMENT1
+        //discard;
 
+    } else if(zPrepass && eyeIndex == 1) { //right eye z prepass
+        //colour = vec4(1.0,1.0,0.0,1.0);
+        colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height)));
+        //discard;
 
-    vec4 textureColorAmb = vec4(0.0);
-    vec4 textureColorDif = vec4(0.0);
-    vec4 textureColorSpec = vec4(0.0);
-    vec4 diffContr = vec4(0.0);
-    vec4 ambContr = vec4(0.0);
-    vec4 specContr = vec4(0.0);
+    } else {
 
-    if(diffuseTextureArrayIndex >= 0.0f)
-        textureColorDif =  texture(diffuseSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,diffuseTextureArrayIndex)) * vec4(Kd,1.0f);
-    if(ambientTextureArrayIndex >= 0.0f)
-        textureColorAmb =  texture(ambientSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,ambientTextureArrayIndex))*  vec4(Ka,1.0f);
-    if(specularTextureArrayIndex >= 0.0f)
-        textureColorSpec =  texture(specularSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,specularTextureArrayIndex))*  vec4(Ks,1.0f);
-    //treat them as point lights
-    for(int i = 0; i < lightCount; i++) {
-        //lights
-        float dist = distance(interpolatedPos,lights[i].position);
+        vec4 textureColorAmb = vec4(0.0);
+        vec4 textureColorDif = vec4(0.0);
+        vec4 textureColorSpec = vec4(0.0);
+        vec4 diffContr = vec4(0.0);
+        vec4 ambContr = vec4(0.0);
+        vec4 specContr = vec4(0.0);
 
-        float atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * dist + lights[i].attenuationQuadratic * dist*dist);
+        if(diffuseTextureArrayIndex >= 0.0f)
+            textureColorDif =  texture(diffuseSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,diffuseTextureArrayIndex)) * vec4(Kd,1.0f);
+        if(ambientTextureArrayIndex >= 0.0f)
+            textureColorAmb =  texture(ambientSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,ambientTextureArrayIndex))*  vec4(Ka,1.0f);
+        if(specularTextureArrayIndex >= 0.0f)
+            textureColorSpec =  texture(specularSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,specularTextureArrayIndex))*  vec4(Ks,1.0f);
+        //treat them as point lights
+        for(int i = 0; i < lightCount; i++) {
+            //lights
+            float dist = distance(interpolatedPos,lights[i].position);
 
-        //light direction (point light!)
-        vec3 l = normalize(lights[i].position - interpolatedPos); // world coordinate direction
-        //vec3 l = vec3(normalize(interpolatedPos -lights[i].position)); // world coordinate direction
-        vec3 v = normalize(cameraWorldPos - interpolatedPos); //world coordinate direction
-        vec3 n = normalize(interpolatedNormal);
+            float atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * dist + lights[i].attenuationQuadratic * dist*dist);
 
-        float NL = dot(n , l);
-        //NL is negative -> do not contribute negative values
-        if(NL > 0.0) {
-            //vec3 rl = reflect(l, n);
-            //d−2(d⋅n)n
-            vec3 rl = normalize ( -l - 2 * dot(-l , n) * n );
-            float RLV = max(dot(rl,v),0.0);
-            vec3 d = (Kd * lights[i].diffuse);
-            vec3 a = (Ka * lights[i].ambient);
-            vec3 s = (Ks * lights[i].specular);
-            d *= NL;
-            d *= atten;
-            a *= atten;
-            s *= pow(RLV,specularExponent);
-            s *= atten;
-            diffContr += vec4(d,1.0);
-            ambContr += vec4(a,1.0);
-            specContr += vec4(s,1.0);
+            //light direction (point light!)
+            vec3 l = normalize(lights[i].position - interpolatedPos); // world coordinate direction
+            //vec3 l = vec3(normalize(interpolatedPos -lights[i].position)); // world coordinate direction
+            vec3 v = normalize(cameraWorldPos - interpolatedPos); //world coordinate direction
+            vec3 n = normalize(interpolatedNormal);
+
+            float NL = dot(n , l);
+            //NL is negative -> do not contribute negative values
+            if(NL > 0.0) {
+                //vec3 rl = reflect(l, n);
+                //d−2(d⋅n)n
+                vec3 rl = normalize ( -l - 2 * dot(-l , n) * n );
+                float RLV = max(dot(rl,v),0.0);
+                vec3 d = (Kd * lights[i].diffuse);
+                vec3 a = (Ka * lights[i].ambient);
+                vec3 s = (Ks * lights[i].specular);
+                d *= NL;
+                d *= atten;
+                a *= atten;
+                s *= pow(RLV,specularExponent);
+                s *= atten;
+                diffContr += vec4(d,1.0);
+                ambContr += vec4(a,1.0);
+                specContr += vec4(s,1.0);
+            }
         }
+        vec4 tColour = specContr * textureColorSpec + ambContr * textureColorAmb +  diffContr * textureColorDif;
+        tColour.a = transparency;
+        if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
+
+        colour = tColour;
+
     }
-    vec4 tColour = specContr * textureColorSpec + ambContr * textureColorAmb +  diffContr * textureColorDif;
-    tColour.a = transparency;
-    if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
-    colour = tColour;
 
 }

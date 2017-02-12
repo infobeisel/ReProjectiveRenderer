@@ -12,7 +12,7 @@ CanonicalGLWindowImpl::~CanonicalGLWindowImpl()
     delete scene;
 }
 void CanonicalGLWindowImpl::initializeGL() {
-    timer.start();
+    //timer.start();
     renderer.initialize();
 
     //load models
@@ -48,7 +48,11 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
 
 void CanonicalGLWindowImpl::paintGL() {
 
-    //qDebug() << (1000.0f / (float)timer.restart());
+
+
+
+
+
 
     //tell the shader the camera world pos
     renderer.setCameraPosition(cameraPosition);
@@ -58,12 +62,17 @@ void CanonicalGLWindowImpl::paintGL() {
     QMatrix4x4 nView = QMatrix4x4();
     handleCursor(&nView);
     renderer.setViewMatrix(nView);
-
+    timer = QElapsedTimer();
+    timer.start();
     renderer.draw(scene);
 
 
     //trigger an update so that this function gets called the next frame again
     QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
+
+    //qDebug() << (1000.0f / (float)timer.elapsed());
+
+
 }
 
 void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
@@ -86,8 +95,8 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
     forward = qx.rotatedVector(forward);        //new forward vector
     up = qx.rotatedVector(up);        //new up vector
     //move the camera
-    cameraPosition += moveDir.z() * forward;
-    cameraPosition += moveDir.x() * right;
+    cameraPosition += moveDir.z() * ((float)timer.elapsed() / 1000.0f) *  forward  ;
+    cameraPosition += moveDir.x() * ((float)timer.elapsed() / 1000.0f) * right  ;
 
     cameraOrientation = qx * qy;
 
@@ -100,7 +109,9 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
 }
 
 void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
-    float tspeed = 4.1f;//hardcoded movement speed
+    float tspeed = 400.1f;//hardcoded movement speed
+
+
     QVector3D t = QVector3D(0.0f,0.0f,0.0f);
     switch(ev->key()) {
         case Qt::Key_W:
@@ -118,11 +129,11 @@ void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
         default:
         break;
     }
-    moveDir += t * tspeed;
+    moveDir += t * tspeed ;
 }
 
 void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
-    float tspeed = 4.1f;
+    float tspeed = 400.1f;
     QVector3D t = QVector3D(0.0f,0.0f,0.0f);
     switch(ev->key()) {
         case Qt::Key_W:
@@ -140,5 +151,5 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         default:
         break;
     }
-    moveDir -= t * tspeed;
+    moveDir -= t * tspeed ;
 }

@@ -1,8 +1,7 @@
 #version 410 core
 
-layout(location = 0) out vec4 colour;
-//layout(location = 1) out vec4 colourRight;
-//layout(location = 2) out float reprojection;
+layout(location = 0 ) out vec4 colour;
+
 
 
 struct LightSource {
@@ -23,7 +22,7 @@ uniform mat4 V;
 uniform mat4 P;
 uniform float width;
 uniform float height;
-in vec4 cameraSpacePos;
+layout(location = 1) in vec4 cameraSpacePos;
 uniform sampler2D reprojectionCoordinateSampler;
 //---------------------
 uniform vec3 cameraWorldPos;
@@ -43,10 +42,10 @@ uniform int lightCount;
 const int maxLightCount = 10;
 uniform LightSource lights[maxLightCount];
 
-in vec2 interpolatedUV;
-in vec3 interpolatedNormal;
-in vec3 interpolatedPos;
-in vec3 interpolatedViewDir;
+layout(location = 2) in vec2 interpolatedUV;
+layout(location = 3) in vec3 interpolatedNormal;
+layout(location = 0) in vec3 interpolatedPos;
+layout(location = 4) in vec3 interpolatedViewDir;
 //texture information: in which layer this fragment has to lookup the texture?
 uniform float diffuseTextureArrayIndex;
 uniform sampler2DArray diffuseSampler;
@@ -62,14 +61,23 @@ void main() {
     if(zPrepass && eyeIndex == 0) {// left eye z prepass: depth values get written + write reprojected x screen coordinate in buffer
         //reprojection
         //left camera space position + translation resulting from eye separation = right camera space position
-        //vec4 rightCameraSpacePos = cameraSpacePos + vec4(eyeSeparation,0.0,0.0,1.0);
+        vec4 rightCameraSpacePos = cameraSpacePos + vec4(eyeSeparation,0.0,0.0,1.0);
         //projection * right camera space position = Clip coordinates (where x and y values are screen coordinates)
-       // vec4 clipSpacePosRightEye = P * rightCameraSpacePos;
-        colour = vec4((gl_FragCoord.x / width),0.0,0.0,1.0);//(gl_FragCoord.x / width); // write into COLOR_ATTACHMENT1
-        //discard;
+        vec4 clipSpacePosRightEye = P * rightCameraSpacePos; //NOT between -1 and 1 yet. divde by w.
+        float uvSpaceDelta =   clipSpacePosRightEye.x / clipSpacePosRightEye.w; // between -1 and 1
+        uvSpaceDelta += 1.0f ; // between 0 and 2
+        uvSpaceDelta *= 0.5f; // between 0 and 1
+        uvSpaceDelta = (gl_FragCoord.x / width) - uvSpaceDelta; //uvSpaceDelta: the distance which is needed to
+        //get from a fragment from the right image to the corresponding fragment on the left image, between -1 and 1
 
+        float error = uvSpaceDelta > -1.0f && uvSpaceDelta < 0.0f ? 0.0f : 1.0f; // uvSpaceDelta is negative, gets clamped to normalized color values (0,1) -> multiple render targets needed.
+        colour = vec4(uvSpaceDelta /*(clipSpacePosRightEye.x + (width/ 2.0f)) / width */,0.0,0.0,1.0);
+        //reprojection = uvSpaceDelta;
+        //colour = vec4(0.2,0.0,0.0,1.0);
     } else if(zPrepass && eyeIndex == 1) { //right eye z prepass
         //colour = vec4(1.0,1.0,0.0,1.0);
+        //watch the deltas
+        //colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height)));
         colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height)));
         //discard;
 

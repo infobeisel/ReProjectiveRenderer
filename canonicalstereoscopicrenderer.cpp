@@ -10,6 +10,10 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GLint viewport[4] = {
         0,0,0,0
     };
+
+
+
+
     //set projection matrix (which is the same for both eyes)
     shaderProgram.setUniformValue( "P", projection );
     shaderProgram.setUniformValue( "height", 256.0f );
@@ -27,6 +31,10 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbo);
     GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+    //draw to attachments
+    //GLenum drawBufs[3] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2};
+    //GL.glDrawBuffers(3,drawBufs);
+
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
@@ -39,6 +47,8 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glDrawBuffer(GL_COLOR_ATTACHMENT2); //draw into "reprojection x" buffer
     shaderProgram.setUniformValue("zPrepass",true);
     s->draw(&shaderProgram,view,projection, OPAQUE );
+
+
 
     //first draw opaque, then transparent
     GL.glDrawBuffer(GL_COLOR_ATTACHMENT0); //draw into left color buffer

@@ -57,10 +57,12 @@ void Scene::load(QOpenGLShaderProgram *toProgram) {
     //array to traverse the node tree
     QVector<aiNode*> nodes;
     nodes.push_back(s->mRootNode);
+    nodeCount = 0;
     int indexOffsetCounter = 0; //hold the current index offset
     while(nodes.size() != 0) {
         //handle current node
         aiNode* node = nodes.takeFirst();
+        nodeCount++;
         //is this node a light source? if yes update position and direction into the aiLight datastructure
         if(s->HasLights()) {
             if(lightSourceNameToLightArrayIndex.find(QString(node->mName.data)) != lightSourceNameToLightArrayIndex.end()) {
@@ -265,6 +267,8 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
 void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix, materialClassifier materialTypes){
     vertexArrayObject.bind();
 
+
+
     //tell the shader how many light sources there are
     withProgram->setUniformValue( "lightCount", s->mNumLights );
     //go through all lights and set the light uniforms
@@ -295,14 +299,18 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
 
     //go through all nodes (EXACTLY AS THEY WERE LOADED INTO THE VERTEX BUFFER)
     //array to traverse the node tree
-    QVector<aiNode*> nodes;
-    nodes = QVector<aiNode*>();
-    nodes.push_back(s->mRootNode);
+    QVector<aiNode*>* nodes;
+    nodes = new QVector<aiNode*>();
+    nodes->reserve(nodeCount);
+    nodes->push_back(s->mRootNode);
+    int remainingNodes = nodeCount;
+
 
     int indexOffsetCounter = 0;
-    while(nodes.size() != 0 ) {
+    while(remainingNodes != 0 ) {
+        remainingNodes--;
         //handle current node
-        aiNode* node = nodes.takeFirst();
+        aiNode* node = nodes->takeFirst();
         //qDebug() << QString(node->mName.data) << node->mTransformation.a4 <<node->mTransformation.b4 <<node->mTransformation.c4 <<node->mTransformation.d4  ;
         QMatrix4x4 modelMatrix =  QMatrix4x4(node->mTransformation[0]);
         QMatrix4x4 modelViewMatrix = viewMatrix * modelMatrix;
@@ -385,7 +393,9 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
         }
         //add all children
         for(uint k = 0; k < node->mNumChildren; k++)
-            nodes.push_back(node->mChildren[k]);
+            nodes->push_back(node->mChildren[k]);
     }
+
+    delete nodes;
     vertexArrayObject.release();
 }

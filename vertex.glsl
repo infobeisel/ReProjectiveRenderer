@@ -11,11 +11,11 @@ uniform mat4 MV;
 uniform mat4 VP;
 uniform mat3 NormalM;
 
-out vec3 interpolatedPos;
-out vec4 cameraSpacePos;
-out vec2 interpolatedUV;
-out vec3 interpolatedNormal;
-out vec3 interpolatedViewDir;
+layout(location = 0) out vec3 interpolatedPos;
+layout(location = 1) out vec4 cameraSpacePos;
+layout(location = 2) out vec2 interpolatedUV;
+layout(location = 3) out vec3 interpolatedNormal;
+layout(location = 4) out vec3 interpolatedViewDir;
 void main() {
     gl_Position = MVP * vec4(position,1.0);
     cameraSpacePos = MV * vec4(position,1.0);

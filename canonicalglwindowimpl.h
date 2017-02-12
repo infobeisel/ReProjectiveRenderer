@@ -36,6 +36,7 @@ private:
     Scene* scene;
 
     QElapsedTimer timer;
+
     void handleCursor(QMatrix4x4* affect);//translates cursor movement into view matrix updates
 };
 #endif // CANONICALGLWINDOWIMPL_H

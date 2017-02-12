@@ -9,6 +9,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
+#include <QElapsedTimer>
 
 typedef unsigned int	materialClassifier;
 #define TRANSPARENT				0x0001
@@ -57,13 +58,14 @@ private:
     QVector<Node> transparentNodes;
     QVector<Node> opaqueNodes;
 
-
+  //  QElapsedTimer timer;
 
 
     QMap<QString,int> lightSourceNameToLightArrayIndex;
     ClientTextureArrayManager* textureManager;
     //the importer object and the scene from assimp
     const aiScene* s;
+    int nodeCount; // the total count of aiNode s nodes in the scene
     Assimp::Importer importer;
 };
 #endif // SCENE_H

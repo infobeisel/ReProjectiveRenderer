@@ -2,7 +2,6 @@
 
 CanonicalMonoscopicRenderer::CanonicalMonoscopicRenderer()
 {
-
 }
 void CanonicalMonoscopicRenderer::setProjectionMatrix(QMatrix4x4 p) {projection = p;}
 void CanonicalMonoscopicRenderer::setViewMatrix(QMatrix4x4 v) {view = v;}
@@ -44,6 +43,9 @@ void CanonicalMonoscopicRenderer::initialize() {
     if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Fragment, fragmentShaderPath.toUtf8() ) ) {
         qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
     }
+
+
+
     if ( !shaderProgram.link() ) {
         qDebug() << "ERROR linking shader program:" << shaderProgram.log();
     }

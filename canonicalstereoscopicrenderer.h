@@ -2,7 +2,7 @@
 #define CANONICALSTEROSCOPICRENDERER_H
 
 #include "canonicalmonoscopicrenderer.h"
-
+#include <QElapsedTimer>
 
 
 class CanonicalStereoscopicRenderer : public CanonicalMonoscopicRenderer
@@ -19,6 +19,7 @@ private:
     GLuint fbo;
     GLuint renderbuffers[NumRenderbuffers];
 
+   // QElapsedTimer timer;
 
 };
 

@@ -3,7 +3,6 @@
 layout(location = 0 ) out vec4 colour;
 
 
-
 struct LightSource {
     vec3 ambient;
     vec3 diffuse;

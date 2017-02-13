@@ -103,7 +103,7 @@ void CanonicalStereoscopicRenderer::initialize() {
 
     //left eye: 4 render textures (left color, right color, reprojected x coordinates, depth) ,  1 stencil buffer
     GL.glGenTextures(5,renderbuffers);
-    GL.glGenRenderbuffers(1,&renderbuffers[Stencil]);
+    //GL.glGenRenderbuffers(1,&renderbuffers[Stencil]);
 
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[ColorLeft]);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -140,8 +140,8 @@ void CanonicalStereoscopicRenderer::initialize() {
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_DEPTH_COMPONENT24  ,512,256,0,  GL_DEPTH_COMPONENT  ,GL_FLOAT,NULL);
 
-    GL.glBindRenderbuffer(GL_RENDERBUFFER,renderbuffers[Stencil]);
-    GL.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL ,512,256);
+    //GL.glBindRenderbuffer(GL_RENDERBUFFER,renderbuffers[Stencil]);
+    //GL.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL,512,256);
 
     GL.glGenFramebuffers(1,&fbo);
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbo);
@@ -149,7 +149,8 @@ void CanonicalStereoscopicRenderer::initialize() {
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,renderbuffers[ColorRight],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,GL_TEXTURE_2D,renderbuffers[ReprojectedX],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[DepthLeft],0);
-    GL.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,GL_RENDERBUFFER,renderbuffers[Stencil]);
+    //GL.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,GL_RENDERBUFFER,renderbuffers[Stencil]);
+
 
     //bind "reprojection x" buffer for reading
     GL.glActiveTexture(GL_TEXTURE0);

@@ -1,8 +1,17 @@
 #include "canonicalstereoscopicrenderer.h"
 
+#define MAX_EYE_SEPARATION 7.0f
 CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 {
+    normalizedEyeSeparation = 1.0f;
+}
 
+void CanonicalStereoscopicRenderer::setNormalizedEyeSeparation(float e) {
+    e = e > 1.0f ? 1.0f : (e < 0.0f ? 0.0f : e);
+    normalizedEyeSeparation = e;
+}
+float CanonicalStereoscopicRenderer::getNormalizedEyeSeparation() {
+    return normalizedEyeSeparation;
 }
 
 
@@ -23,8 +32,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     int w = viewport[2];
     int h = viewport[3];
     //qDebug() << w << " " << h;
-    //float eyeSeparation = 0.07f;
-    float eyeSeparation = 7.0f; // 7 cm ?
+    float eyeSeparation = MAX_EYE_SEPARATION * normalizedEyeSeparation;
     GL.glBindFramebuffer(GL_FRAMEBUFFER,0);
 
     GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -39,14 +47,14 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
     GL.glViewport( 0, 0,512,256 );
-    view.translate( cameraOrientation.rotatedVector( QVector3D(-eyeSeparation / 2.0f,0.0f,0.0f) ));
-    setCameraPosition(cameraPosition - QVector3D(-eyeSeparation / 2.0f,0.0f,0.0f));
+    view.translate( cameraOrientation.rotatedVector( QVector3D(eyeSeparation / 2.0f,0.0f,0.0f) ));
+    setCameraPosition(cameraPosition - QVector3D(eyeSeparation / 2.0f,0.0f,0.0f));
     shaderProgram.setUniformValue( "V", view );
 
     //perform z prepass
     GL.glDrawBuffer(GL_COLOR_ATTACHMENT2); //draw into "reprojection x" buffer
     shaderProgram.setUniformValue("zPrepass",true);
-    s->draw(&shaderProgram,view,projection, OPAQUE );
+    s->draw(&shaderProgram,view,projection, OPAQUE);
 
 
 
@@ -67,8 +75,8 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,512,256 );
-    view.translate( cameraOrientation.rotatedVector( QVector3D(eyeSeparation,0.0f,0.0f) ));
-    setCameraPosition(cameraPosition - QVector3D(eyeSeparation,0.0f,0.0f));
+    view.translate( cameraOrientation.rotatedVector( QVector3D(-eyeSeparation,0.0f,0.0f) ));
+    setCameraPosition(cameraPosition - QVector3D(-eyeSeparation,0.0f,0.0f));
     shaderProgram.setUniformValue( "V", view );
     shaderProgram.setUniformValue("zPrepass",true);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -94,7 +102,7 @@ void CanonicalStereoscopicRenderer::initialize() {
     GLenum status = GL.glGetError();
 
     //left eye: 4 render textures (left color, right color, reprojected x coordinates, depth) ,  1 stencil buffer
-    GL.glGenTextures(4,renderbuffers);
+    GL.glGenTextures(5,renderbuffers);
     GL.glGenRenderbuffers(1,&renderbuffers[Stencil]);
 
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[ColorLeft]);
@@ -118,7 +126,14 @@ void CanonicalStereoscopicRenderer::initialize() {
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,512,256,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);
 
-    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[Depth]);
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[DepthLeft]);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_DEPTH_COMPONENT24  ,512,256,0,  GL_DEPTH_COMPONENT  ,GL_FLOAT,NULL);
+
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[DepthRight]);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -133,13 +148,22 @@ void CanonicalStereoscopicRenderer::initialize() {
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderbuffers[ColorLeft],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,renderbuffers[ColorRight],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,GL_TEXTURE_2D,renderbuffers[ReprojectedX],0);
-    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[Depth],0);
+    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[DepthLeft],0);
     GL.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,GL_RENDERBUFFER,renderbuffers[Stencil]);
 
     //bind "reprojection x" buffer for reading
     GL.glActiveTexture(GL_TEXTURE0);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[ReprojectedX]);
     shaderProgram.setUniformValue("reprojectionCoordinateSampler" , 0);
+    //bind left image color buffer for reading
+    GL.glActiveTexture(GL_TEXTURE1);
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[ColorLeft]);
+    shaderProgram.setUniformValue("leftImageSampler" , 1);
+    //bind left image depth  buffer for reading
+    GL.glActiveTexture(GL_TEXTURE2);
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[DepthRight]);
+    shaderProgram.setUniformValue("leftImageDepthSampler" , 2);
+
 
     status = GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     qDebug() << status;

@@ -5,7 +5,7 @@
 #include <QOpenGLShaderProgram>
 #include "scenemanager.h"
 #include <QKeyEvent>
-#include "canonicalmonoscopicrenderer.h"
+#include "renderer.h"
 #include "canonicalstereoscopicrenderer.h"
  #include <QElapsedTimer>
 class CanonicalGLWindowImpl : public QOpenGLWindow
@@ -24,7 +24,7 @@ protected:
     void initializeGL() ;
     void resizeGL(int w, int h) ;
 private:
-    CanonicalStereoscopicRenderer renderer;
+    Renderer* renderer;
 
     //camera movement
     QVector3D cameraPosition;
@@ -36,6 +36,7 @@ private:
     Scene* scene;
 
     QElapsedTimer timer;
+    bool shiftKeyHeld;
 
     void handleCursor(QMatrix4x4* affect);//translates cursor movement into view matrix updates
 };

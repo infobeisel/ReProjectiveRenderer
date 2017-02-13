@@ -2,23 +2,24 @@
 #define CANONICALMONOSCOPICRENDERER_H
 
 #include "scene.h"
+#include "renderer.h"
 
-
-class CanonicalMonoscopicRenderer
+class CanonicalMonoscopicRenderer : public Renderer
 {
 public:
     CanonicalMonoscopicRenderer();
-    virtual void draw(Scene* s);
-    virtual void initialize();
-    void setProjectionMatrix(QMatrix4x4 p);
-    void setViewMatrix(QMatrix4x4 v);
-    void setCameraPosition(QVector3D p);
-    void setCameraOrientation(QQuaternion q);
-
-    QOpenGLShaderProgram shaderProgram;
+    void draw(Scene* s) override;
+    void initialize() override;
+    void setNormalizedEyeSeparation(float e) override;
+    float getNormalizedEyeSeparation() override;
+    void setProjectionMatrix(QMatrix4x4 p) override;
+    void setViewMatrix(QMatrix4x4 v) override;
+    void setCameraPosition(QVector3D p) override;
+    void setCameraOrientation(QQuaternion q) override;
 
 
 protected:
+
     //gl attributes
     QMatrix4x4 view;
     QMatrix4x4 projection;

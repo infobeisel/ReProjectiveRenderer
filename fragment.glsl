@@ -24,6 +24,8 @@ uniform float width;
 uniform float height;
 layout(location = 1) in vec4 cameraSpacePos;
 uniform sampler2D reprojectionCoordinateSampler;
+uniform sampler2D leftImageSampler;
+uniform sampler2D leftImageDepthSampler;
 //---------------------
 uniform vec3 cameraWorldPos;
 
@@ -71,14 +73,15 @@ void main() {
         //get from a fragment from the right image to the corresponding fragment on the left image, between -1 and 1
 
         float error = uvSpaceDelta > -1.0f && uvSpaceDelta < 0.0f ? 0.0f : 1.0f; // uvSpaceDelta is negative, gets clamped to normalized color values (0,1) -> multiple render targets needed.
-        colour = vec4(uvSpaceDelta /*(clipSpacePosRightEye.x + (width/ 2.0f)) / width */,0.0,0.0,1.0);
+        colour = vec4(-uvSpaceDelta /*(clipSpacePosRightEye.x + (width/ 2.0f)) / width */,0.0,0.0,1.0);
         //reprojection = uvSpaceDelta;
         //colour = vec4(0.2,0.0,0.0,1.0);
     } else if(zPrepass && eyeIndex == 1) { //right eye z prepass
         //colour = vec4(1.0,1.0,0.0,1.0);
         //watch the deltas
         //colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height)));
-        colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height)));
+        colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height))); // sample the reprojection distance
+        colour = texture(leftImageSampler,vec2((gl_FragCoord.x / width) + colour.r,(gl_FragCoord.y / height))); // sample the reprojected fragment
         //discard;
 
     } else {

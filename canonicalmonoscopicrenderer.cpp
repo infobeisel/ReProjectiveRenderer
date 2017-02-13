@@ -13,7 +13,8 @@ void CanonicalMonoscopicRenderer::setCameraPosition(QVector3D p) {
 void CanonicalMonoscopicRenderer::setCameraOrientation(QQuaternion p) {
     cameraOrientation = p;
 }
-
+void CanonicalMonoscopicRenderer::setNormalizedEyeSeparation(float e) {}
+float CanonicalMonoscopicRenderer::getNormalizedEyeSeparation() {return 0.0f;}
 void CanonicalMonoscopicRenderer::draw(Scene* s) {
 
     // Clear color and depth buffers

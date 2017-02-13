@@ -12,12 +12,17 @@ public:
 
     void draw(Scene* s) override;
     void initialize() override;
+
+    void setNormalizedEyeSeparation(float e) override;
+    float getNormalizedEyeSeparation() override;
 private:
-    enum {ColorLeft, ColorRight,ReprojectedX,  Depth, Stencil, NumRenderbuffers};
+    enum {ColorLeft, ColorRight,ReprojectedX,  DepthLeft, DepthRight, Stencil, NumRenderbuffers};
 
 
     GLuint fbo;
     GLuint renderbuffers[NumRenderbuffers];
+
+    float normalizedEyeSeparation;
 
    // QElapsedTimer timer;
 

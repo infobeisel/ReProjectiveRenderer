@@ -1,19 +1,27 @@
 #include "openglfunctions.h"
 #include "canonicalglwindowimpl.h"
+#include "canonicalmonoscopicrenderer.h"
+#include "canonicalstereoscopicrenderer.h"
 #include "scene.h"
 #include <QCoreApplication>
 #include <fstream>
 
 CanonicalGLWindowImpl::CanonicalGLWindowImpl()
 {
+
 }
 CanonicalGLWindowImpl::~CanonicalGLWindowImpl()
 {
     delete scene;
+    delete renderer;
 }
 void CanonicalGLWindowImpl::initializeGL() {
+
+    //renderer = new CanonicalStereoscopicRenderer();
     //timer.start();
-    renderer.initialize();
+    GL.glClear(0);
+    renderer = new CanonicalStereoscopicRenderer();
+    renderer->initialize();
 
     //load models
     std::ifstream in("scenelocation");
@@ -24,8 +32,8 @@ void CanonicalGLWindowImpl::initializeGL() {
 
 
     scene = new Scene(paths.at(0));
-    scene->load(&renderer.shaderProgram);
-    scene->bind(&renderer.shaderProgram);
+    scene->load(renderer->getShaderProgram());
+    scene->bind(renderer->getShaderProgram());
 
     //movement
     lastCursorPos = QVector<int>();
@@ -43,7 +51,7 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     QMatrix4x4 nProj = QMatrix4x4();
     nProj.setToIdentity();
     nProj.perspective(60.0f, (float)w/h, 0.3f, 10000);
-    renderer.setProjectionMatrix(nProj);
+    renderer->setProjectionMatrix(nProj);
 }
 
 void CanonicalGLWindowImpl::paintGL() {
@@ -55,16 +63,16 @@ void CanonicalGLWindowImpl::paintGL() {
 
 
     //tell the shader the camera world pos
-    renderer.setCameraPosition(cameraPosition);
-    renderer.setCameraOrientation(cameraOrientation);
+    renderer->setCameraPosition(cameraPosition);
+    renderer->setCameraOrientation(cameraOrientation);
 
 
     QMatrix4x4 nView = QMatrix4x4();
     handleCursor(&nView);
-    renderer.setViewMatrix(nView);
+    renderer->setViewMatrix(nView);
     timer = QElapsedTimer();
     timer.start();
-    renderer.draw(scene);
+    renderer->draw(scene);
 
 
     //trigger an update so that this function gets called the next frame again
@@ -95,8 +103,8 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
     forward = qx.rotatedVector(forward);        //new forward vector
     up = qx.rotatedVector(up);        //new up vector
     //move the camera
-    cameraPosition += moveDir.z() * ((float)timer.elapsed() / 1000.0f) *  forward  ;
-    cameraPosition += moveDir.x() * ((float)timer.elapsed() / 1000.0f) * right  ;
+    cameraPosition += moveDir.z() * ((float)timer.elapsed() / 1000.0f) * (shiftKeyHeld ? 0.1f : 1.0f) *  forward  ;
+    cameraPosition += moveDir.x() * ((float)timer.elapsed() / 1000.0f) * (shiftKeyHeld ? 0.1f : 1.0f) * right  ;
 
     cameraOrientation = qx * qy;
 
@@ -109,7 +117,6 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
 }
 
 void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
-    float tspeed = 400.1f;//hardcoded movement speed
 
 
     QVector3D t = QVector3D(0.0f,0.0f,0.0f);
@@ -126,14 +133,25 @@ void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
         case Qt::Key_D:
         t = QVector3D(1.0f,0.0f,0.0f);
         break;
+        case Qt::Key_Shift:
+        shiftKeyHeld = true;
+        break;
+        case Qt::Key_Up:
+        if(shiftKeyHeld)
+             renderer->setNormalizedEyeSeparation(renderer->getNormalizedEyeSeparation() + ((float)timer.elapsed() / 1000.0f));
+        break;
+        case Qt::Key_Down:
+        if(shiftKeyHeld)
+             renderer->setNormalizedEyeSeparation(renderer->getNormalizedEyeSeparation() - ((float)timer.elapsed() / 1000.0f));
+        break;
         default:
         break;
     }
+    float tspeed = 400.1f;
     moveDir += t * tspeed ;
 }
 
 void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
-    float tspeed = 400.1f;
     QVector3D t = QVector3D(0.0f,0.0f,0.0f);
     switch(ev->key()) {
         case Qt::Key_W:
@@ -148,8 +166,12 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         case Qt::Key_D:
         t = QVector3D(1.0f,0.0f,0.0f);
         break;
+        case Qt::Key_Shift:
+        shiftKeyHeld = false;
+        break;
         default:
         break;
     }
+    float tspeed = 400.1f;
     moveDir -= t * tspeed ;
 }

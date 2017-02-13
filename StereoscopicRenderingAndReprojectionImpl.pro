@@ -19,7 +19,8 @@ SOURCES += main.cpp \
     clienttexturearray.cpp \
     clienttexture.cpp \
     canonicalmonoscopicrenderer.cpp \
-    canonicalstereoscopicrenderer.cpp
+    canonicalstereoscopicrenderer.cpp \
+    renderer.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -45,7 +46,8 @@ HEADERS += \
     clienttexture.h \
     openglfunctions.h \
     canonicalmonoscopicrenderer.h \
-    canonicalstereoscopicrenderer.h
+    canonicalstereoscopicrenderer.h \
+    renderer.h
 
 #added assimp as external library in the project directory...
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/assimp/lib/release/ -lassimp

@@ -1,6 +1,7 @@
 #version 410 core
 
-layout(location = 0 ) out vec4 colour;
+layout(location = 0 ) out vec4 color;
+layout(location = 1 ) out float reprojectedX;
 
 
 struct LightSource {
@@ -24,7 +25,6 @@ uniform float height;
 layout(location = 1) in vec4 cameraSpacePos;
 uniform sampler2D reprojectionCoordinateSampler;
 uniform sampler2D leftImageSampler;
-uniform sampler2D leftImageDepthSampler;
 //---------------------
 uniform vec3 cameraWorldPos;
 
@@ -69,20 +69,12 @@ void main() {
         uvSpaceDelta += 1.0f ; // between 0 and 2
         uvSpaceDelta *= 0.5f; // between 0 and 1
         uvSpaceDelta = (gl_FragCoord.x / width) - uvSpaceDelta; //uvSpaceDelta: the distance which is needed to
-        //get from a fragment from the right image to the corresponding fragment on the left image, between -1 and 1
-
-        float error = uvSpaceDelta > -1.0f && uvSpaceDelta < 0.0f ? 0.0f : 1.0f; // uvSpaceDelta is negative, gets clamped to normalized color values (0,1) -> multiple render targets needed.
-        colour = vec4(-uvSpaceDelta /*(clipSpacePosRightEye.x + (width/ 2.0f)) / width */,0.0,0.0,1.0);
-        //reprojection = uvSpaceDelta;
-        //colour = vec4(0.2,0.0,0.0,1.0);
+        //get from a fragment from the right image to the corresponding fragment on the left image, between -1 and 0
+        reprojectedX = - uvSpaceDelta;
     } else if(zPrepass && eyeIndex == 1) { //right eye z prepass
-        //colour = vec4(1.0,1.0,0.0,1.0);
-        //watch the deltas
-        //colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height)));
-        colour = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height))); // sample the reprojection distance
-        colour = texture(leftImageSampler,vec2((gl_FragCoord.x / width) + colour.r,(gl_FragCoord.y / height))); // sample the reprojected fragment
-        //discard;
-
+        vec4 r = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height))); // sample the reprojection distance
+        float uvSpaceDelta = r.r;
+        color = texture(leftImageSampler,vec2((gl_FragCoord.x / width)  + r.r ,(gl_FragCoord.y / height))); // sample the reprojected fragment
     } else {
 
         vec4 textureColorAmb = vec4(0.0);
@@ -135,7 +127,7 @@ void main() {
         tColour.a = transparency;
         if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
 
-        colour = tColour;
+        color = tColour;
 
     }
 

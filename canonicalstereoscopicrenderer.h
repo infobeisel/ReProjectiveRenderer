@@ -16,11 +16,11 @@ public:
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
 private:
-    enum {ColorLeft, ColorRight,ReprojectedX,  DepthLeft, DepthRight, Stencil, NumRenderbuffers};
-
-
-    GLuint fbo;
-    GLuint renderbuffers[NumRenderbuffers];
+    enum {Color, ReprojectedX, Depth ,NumRenderbuffers};
+    enum {Left, Right,NumFBOs};
+    void initializeFBO(int fboIndex);
+    GLuint fbos[NumFBOs];
+    GLuint renderbuffers[NumFBOs][NumRenderbuffers];
 
     float normalizedEyeSeparation;
 

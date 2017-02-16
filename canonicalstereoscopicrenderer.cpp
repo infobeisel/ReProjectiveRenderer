@@ -74,11 +74,11 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "V", viewLeft );
 
     //first draw opaque, then transparent. store depth values in exchange buffer
-    shaderProgram.setUniformValue("zPrepass",true);
+    shaderProgram.setUniformValue("zPrepass",false);
     GL.glDisable(GL_BLEND);
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",true); //prevent fragment shader from overwriting depth values
+    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
@@ -88,17 +88,6 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glDrawBuffers(2,drawBufs);
     GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-
-
-    //bind "exchange" buffer for reading from the LEFT fbo
-    GL.glActiveTexture(GL_TEXTURE0);
-    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Exchange]);
-    shaderProgram.setUniformValue("exchangeBufferSampler" , 0);
-    //bind left image color buffer for reading
-    GL.glActiveTexture(GL_TEXTURE1);
-    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Color]);
-    shaderProgram.setUniformValue("leftImageSampler" , 1);
-
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
     shaderProgram.setUniformValue("eyeIndex",1);
@@ -106,11 +95,11 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
 
     setCameraPosition(cameraPosition + (right * eyeSeparation / 2.0f));
     shaderProgram.setUniformValue( "V", viewRight );
-    shaderProgram.setUniformValue("zPrepass",true);
+    shaderProgram.setUniformValue("zPrepass",false);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false); //prevent fragment shader from overwriting depth values
+    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);

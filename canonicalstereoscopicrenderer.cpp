@@ -74,14 +74,14 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "V", viewLeft );
 
     //first draw opaque, then transparent. store depth values in exchange buffer
-    shaderProgram.setUniformValue("zPrepass",false);
+    shaderProgram.setUniformValue("zPrepass",true);
     GL.glDisable(GL_BLEND);
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
     GL.glEnable(GL_BLEND);
+    shaderProgram.setUniformValue("zPrepass",true); //prevent fragment shader from overwriting depth values
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
-
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
     //draw to attachments
@@ -109,6 +109,11 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("zPrepass",true);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+    GL.glEnable(GL_BLEND);
+    shaderProgram.setUniformValue("zPrepass",false); //prevent fragment shader from overwriting depth values
+    GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
+    GL.glDisable(GL_BLEND);
 
     //blit framebuffer data to screen
     GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);

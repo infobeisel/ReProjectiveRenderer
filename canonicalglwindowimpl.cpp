@@ -2,6 +2,7 @@
 #include "canonicalglwindowimpl.h"
 #include "canonicalmonoscopicrenderer.h"
 #include "canonicalstereoscopicrenderer.h"
+#include "reprojectivestereoscopicrenderer.h"
 #include "scene.h"
 #include <QCoreApplication>
 #include <fstream>
@@ -20,7 +21,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new CanonicalStereoscopicRenderer();
     //timer.start();
     GL.glClear(0);
-    renderer = new CanonicalStereoscopicRenderer();
+    renderer = new ReprojectiveStereoscopicRenderer();
     renderer->initialize();
 
     //load models

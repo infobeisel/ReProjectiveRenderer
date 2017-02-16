@@ -90,11 +90,19 @@ void ClientTextureArrayManager::loadToServer() {
                             format,         // format
                             GL_UNSIGNED_BYTE, // type
                             clientTex->image()->bits());
-            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_REPEAT);
-            GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_REPEAT);
+
         }
+
+        GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_REPEAT);
+        GL.glTexParameteri(GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_REPEAT);
+
+        GL.glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        GL.glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1); // 1 means trilinear filtering
+        GL.glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        //generate mipmaps
+        GL.glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
         GL.glBindTexture(GL_TEXTURE_2D_ARRAY, 0); //unbind
 
     }

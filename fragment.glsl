@@ -1,7 +1,7 @@
 #version 410 core
 
 layout(location = 0 ) out vec4 color;
-layout(location = 1 ) out float reprojectedX;
+layout(location = 1 ) out vec4 exchangeBuffer;
 
 
 struct LightSource {
@@ -17,13 +17,13 @@ struct LightSource {
 //Stereoscopic related
 uniform bool zPrepass;
 uniform int eyeIndex;
-uniform float eyeSeparation;
+uniform float eyeSeparation; // in centimeters
 uniform mat4 V;
 uniform mat4 P;
 uniform float width;
 uniform float height;
 layout(location = 1) in vec4 cameraSpacePos;
-uniform sampler2D reprojectionCoordinateSampler;
+uniform sampler2D exchangeBufferSampler;
 uniform sampler2D leftImageSampler;
 //---------------------
 uniform vec3 cameraWorldPos;
@@ -59,22 +59,30 @@ uniform sampler2DArray bumpSampler;
 
 void main() {
 
-    if(zPrepass && eyeIndex == 0) {// left eye z prepass: depth values get written + write reprojected x screen coordinate in buffer
-        //reprojection
-        //left camera space position + translation resulting from eye separation = right camera space position
-        vec4 rightCameraSpacePos = cameraSpacePos + vec4(eyeSeparation,0.0,0.0,1.0);
-        //projection * right camera space position = Clip coordinates (where x and y values are screen coordinates)
-        vec4 clipSpacePosRightEye = P * rightCameraSpacePos; //NOT between -1 and 1 yet. divde by w.
-        float uvSpaceDelta =   clipSpacePosRightEye.x / clipSpacePosRightEye.w; // between -1 and 1
-        uvSpaceDelta += 1.0f ; // between 0 and 2
-        uvSpaceDelta *= 0.5f; // between 0 and 1
-        uvSpaceDelta = (gl_FragCoord.x / width) - uvSpaceDelta; //uvSpaceDelta: the distance which is needed to
-        //get from a fragment from the right image to the corresponding fragment on the left image, between -1 and 0
-        reprojectedX = - uvSpaceDelta;
-    } else if(zPrepass && eyeIndex == 1) { //right eye z prepass
-        vec4 r = texture(reprojectionCoordinateSampler,vec2((gl_FragCoord.x / width),(gl_FragCoord.y / height))); // sample the reprojection distance
-        float uvSpaceDelta = r.r;
-        color = texture(leftImageSampler,vec2((gl_FragCoord.x / width)  + r.r ,(gl_FragCoord.y / height))); // sample the reprojected fragment
+   if(zPrepass && eyeIndex == 1) { //right eye z prepass
+        //perform reprojection
+        //right camera space position + translation resulting from eye separation = left camera space position
+        vec4 leftCameraSpacePos = cameraSpacePos + vec4(eyeSeparation ,0.0,0.0,1.0);
+        //projection * left camera space position = Clip coordinates
+        vec4 clipSpacePosLeftEye = P * leftCameraSpacePos; //NOT between -1 and 1 yet. divde by w.
+        float uvSpaceLeftImageXCoord =   clipSpacePosLeftEye.x / clipSpacePosLeftEye.w; // between -1 and 1. NDC.
+        uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
+        uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image
+
+        vec4 r = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord,(gl_FragCoord.y / height))); // sample depth value
+        float leftEyeCameraSpaceDepth = r.g;
+        float rightEyeCameraSpaceDepth = - cameraSpacePos.z / 10000.0f ;
+        float d = abs(leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference
+        float treshold = eyeSeparation /  10000.0f; //normalized threshold
+
+        // pink for unavailable pixels
+        if( uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f) {
+            color = vec4(1.0,0.0,0.8,1.0);
+        } else if(d  > treshold) { //green for fragments that don't pass the depth comparison test
+            color = vec4(0.0,(d - treshold)/ treshold,0.0,1.0); //d-t/t =
+        } else {
+            color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
+       }
     } else {
 
         vec4 textureColorAmb = vec4(0.0);
@@ -127,7 +135,11 @@ void main() {
         tColour.a = transparency;
         if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
 
+        //store color
         color = tColour;
+        //store depth data
+        float depth = - cameraSpacePos.z / 10000.0f ; // z is in negative in opengl camera space. division by far plane to get normalized value
+        exchangeBuffer = vec4(0.0f,depth,0.0,1.0);
 
     }
 

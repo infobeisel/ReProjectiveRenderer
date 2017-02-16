@@ -33,8 +33,15 @@ void CanonicalMonoscopicRenderer::draw(Scene* s) {
     s->draw(&shaderProgram,view,projection, TRANSPARENT);
 
 }
+void CanonicalMonoscopicRenderer::initialize(int w, int h) {
+    initialize();
+}
 
 void CanonicalMonoscopicRenderer::initialize() {
+    GL.glUseProgram(0);
+    shaderProgram.removeAllShaders();
+
+
     QString vertexShaderPath = ":/vertex.glsl";
     QString fragmentShaderPath = ":/fragment.glsl";
     //compile shaders

@@ -52,6 +52,7 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     nProj.setToIdentity();
     nProj.perspective(60.0f, (float)w/h, 0.3f, 10000);
     renderer->setProjectionMatrix(nProj);
+    renderer->initialize(w,h);
 }
 
 void CanonicalGLWindowImpl::paintGL() {

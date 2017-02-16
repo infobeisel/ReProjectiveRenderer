@@ -11,14 +11,14 @@ public:
     CanonicalStereoscopicRenderer();
 
     void draw(Scene* s) override;
-    void initialize() override;
+    void initialize(int w, int h) override;
 
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
 private:
-    enum {Color, ReprojectedX, Depth ,NumRenderbuffers};
+    enum {Color, Exchange, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};
-    void initializeFBO(int fboIndex);
+    void initializeFBO(int fboIndex, int w, int h);
     GLuint fbos[NumFBOs];
     GLuint renderbuffers[NumFBOs][NumRenderbuffers];
 

@@ -10,6 +10,7 @@ public:
     CanonicalMonoscopicRenderer();
     void draw(Scene* s) override;
     void initialize() override;
+    void initialize(int w, int h) override;
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
     void setProjectionMatrix(QMatrix4x4 p) override;

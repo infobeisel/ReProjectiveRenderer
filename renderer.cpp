@@ -4,6 +4,7 @@ Renderer::~Renderer(){}
 
 void Renderer::draw(Scene* s) {}
 void Renderer::initialize() {}
+void Renderer::initialize(int w, int h) {}
 void Renderer::setNormalizedEyeSeparation(float e) {}
 float Renderer::getNormalizedEyeSeparation() {return 0.0f;}
 

@@ -12,6 +12,7 @@ public:
 
     virtual void draw(Scene* s);
     virtual void initialize();
+    virtual void initialize(int width, int height);
     virtual void setNormalizedEyeSeparation(float e);
     virtual float getNormalizedEyeSeparation();
     virtual void setProjectionMatrix(QMatrix4x4 p);

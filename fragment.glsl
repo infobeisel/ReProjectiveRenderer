@@ -1,5 +1,7 @@
 #version 410 core
 
+//1 pixel bias when sampling
+#define exchangeBufferSampleBias 1.0f
 layout(location = 0 ) out vec4 color;
 layout(location = 1 ) out vec4 exchangeBuffer;
 
@@ -14,10 +16,15 @@ struct LightSource {
     float attenuationLinear;
     float attenuationQuadratic;
 };
+
+uniform int debugMode;
+
 //Stereoscopic related
 uniform bool zPrepass;
 uniform int eyeIndex;
 uniform float eyeSeparation; // in centimeters
+uniform float depthThreshold; //threshold for discriminating occluded fragments from reusable fragments
+
 uniform mat4 V;
 uniform mat4 P;
 uniform float width;
@@ -117,6 +124,8 @@ void fullRenderPass() {
 
     //store color
     color = tColour;
+
+
     //store depth data
     if(zPrepass) {
         float depth = - cameraSpacePos.z / 10000.0f ; // z is in negative in opengl camera space. division by far plane to get normalized value
@@ -141,28 +150,37 @@ void main() {
         uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
         uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image
 
-        vec4 r = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord,(gl_FragCoord.y / height))); // sample depth value
+        //float onePixel = (1.0f/width);
+
+        vec4 r = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
         float leftEyeCameraSpaceDepth = r.g;
         float rightEyeCameraSpaceDepth = - cameraSpacePos.z / 10000.0f ;
         float d = abs(leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference
-        float treshold = eyeSeparation /  10000.0f; //normalized threshold
 
         bvec3 isSpecular;
         isSpecular = equal(Ks, vec3(0.0,0.0,0.0));
+        isSpecular.x = isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false;
+        bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
-        // pink for unavailable pixels
-        if( uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f) {
-            color = vec4(1.0,0.0,0.8,1.0);
-            fullRenderPass();
-        } else if(d  > treshold) { //green for fragments that don't pass the depth comparison test
-            color = vec4(0.0,(d - treshold)/ treshold,0.0,1.0); //d-t/t =
-            fullRenderPass();
-        } else if (isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false ) { // if specular,blue
-            color = vec4(0.0,0.0,1.0,1.0);
-            fullRenderPass();
+        if(outsideViewFrustum
+         || d  > depthThreshold
+         || isSpecular.x ) {
+
+            if(debugMode == 1) fullRenderPass();
+            else {
+                if        (outsideViewFrustum) { // pink for unavailable pixels
+                    color = vec4(1.0,0.0,0.8,1.0);
+                } else if (d  > depthThreshold) { //green for fragments that don't pass the depth comparison test
+                    color = vec4(0.0,(d - depthThreshold)/ depthThreshold,0.0,1.0); //d-t/t =
+                } else if (isSpecular.x) { // if specular,blue
+                    color = vec4(0.0,0.0,1.0,1.0);
+                }
+            }
         } else {
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
         }
+
+
     } else {
         fullRenderPass();
 

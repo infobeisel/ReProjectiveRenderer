@@ -141,7 +141,6 @@ void CanonicalStereoscopicRenderer::initialize(int w, int h) {
 }
 void CanonicalStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h) {
     GLenum status = GL.glGetError();
-    void initializeFBO(int fboIndex, int w, int h);
 
     GL.glGenTextures(NumRenderbuffers,renderbuffers[fboIndex]);
     //GL.glGenRenderbuffers(1,&renderbuffers[Stencil]);

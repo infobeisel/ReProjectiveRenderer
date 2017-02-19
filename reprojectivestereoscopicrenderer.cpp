@@ -14,6 +14,12 @@ float ReprojectiveStereoscopicRenderer::getNormalizedEyeSeparation() {
     return normalizedEyeSeparation;
 }
 
+void ReprojectiveStereoscopicRenderer::toggleDebugMode() {
+    GLint l = GL.glGetUniformLocation( 	shaderProgram.programId(),"debugMode");
+    int value = -1;
+    GL.glGetUniformiv(shaderProgram.programId(),l,&value);
+    shaderProgram.setUniformValue( "debugMode", value == 1 ? 0 : 1 );
+}
 
 void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GLint viewport[4] = {
@@ -36,11 +42,13 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     viewRight.setToIdentity();
     viewRight.lookAt(cameraPosition + (right * eyeSeparation / 2.0f) , cameraPosition + (right * eyeSeparation / 2.0f) + forward,up);
 
-
-
     //position the viewports on the screen somehow
     int w = viewport[2];
     int h = viewport[3];
+
+    //depth difference threshold to recognize non-reusable fragments
+    //shaderProgram.setUniformValue( "depthDifThreshold", eyeSeparation );
+    shaderProgram.setUniformValue( "depthThreshold", eyeSeparation /  10000.0f / 1000.0f );
 
 
     //set projection matrix (which is the same for both eyes)
@@ -78,7 +86,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glDisable(GL_BLEND);
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",true); //prevent fragment shader from overwriting depth values
+    shaderProgram.setUniformValue("zPrepass",false); //prevent fragment shader from overwriting depth values
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
@@ -152,14 +160,13 @@ void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
 }
 void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h) {
     GLenum status = GL.glGetError();
-    void initializeFBO(int fboIndex, int w, int h);
 
     GL.glGenTextures(NumRenderbuffers,renderbuffers[fboIndex]);
     //GL.glGenRenderbuffers(1,&renderbuffers[Stencil]);
 
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Color]);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);

@@ -16,6 +16,7 @@ public:
 
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
+    void toggleDebugMode() override;
 private:
     enum {Color, Exchange, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};

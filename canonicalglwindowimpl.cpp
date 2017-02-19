@@ -105,8 +105,8 @@ void CanonicalGLWindowImpl::handleCursor(QMatrix4x4* affect) {
     forward = qx.rotatedVector(forward);        //new forward vector
     up = qx.rotatedVector(up);        //new up vector
     //move the camera
-    cameraPosition += moveDir.z() * ((float)timer.elapsed() / 1000.0f) * (shiftKeyHeld ? 0.1f : 1.0f) *  forward  ;
-    cameraPosition += moveDir.x() * ((float)timer.elapsed() / 1000.0f) * (shiftKeyHeld ? 0.1f : 1.0f) * right  ;
+    cameraPosition += moveDir.z() * ((float)timer.elapsed() / 1000.0f) * (shiftKeyHeld ? 0.1f : 1.0f) * (spaceKeyHeld ? 0.1f : 1.0f) *  forward  ;
+    cameraPosition += moveDir.x() * ((float)timer.elapsed() / 1000.0f) * (shiftKeyHeld ? 0.1f : 1.0f) * (spaceKeyHeld ? 0.1f : 1.0f) * right  ;
 
     cameraOrientation = qx * qy;
 
@@ -137,6 +137,9 @@ void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
         break;
         case Qt::Key_Shift:
         shiftKeyHeld = true;
+        break;
+        case Qt::Key_Space:
+        spaceKeyHeld = true;
         break;
         case Qt::Key_Up:
         if(shiftKeyHeld)
@@ -170,6 +173,12 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         break;
         case Qt::Key_Shift:
         shiftKeyHeld = false;
+        break;
+        case Qt::Key_Space:
+        spaceKeyHeld = false;
+        break;
+        case Qt::Key_F1:
+        renderer->toggleDebugMode();
         break;
         default:
         break;

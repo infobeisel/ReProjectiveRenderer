@@ -37,6 +37,7 @@ private:
 
     QElapsedTimer timer;
     bool shiftKeyHeld;
+    bool spaceKeyHeld;
 
     void handleCursor(QMatrix4x4* affect);//translates cursor movement into view matrix updates
 };

@@ -59,6 +59,8 @@ void CanonicalMonoscopicRenderer::initialize() {
     }
     shaderProgram.bind();
 
+    shaderProgram.setUniformValue("debugMode",0);
+
     //configure view & projection matrix
     view.setToIdentity();
     view.lookAt(
@@ -69,7 +71,7 @@ void CanonicalMonoscopicRenderer::initialize() {
     float aspect = 4.0f/3.0f;
     projection.setToIdentity();
     projection.perspective(
-                60.0f,          // field of vision
+                FOV,          // field of vision
                 aspect,         // aspect ratio
                 0.3f,           // near clipping plane
                 10000.0f);       // far clipping plane

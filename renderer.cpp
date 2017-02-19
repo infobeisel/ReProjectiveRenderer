@@ -6,6 +6,7 @@ void Renderer::draw(Scene* s) {}
 void Renderer::initialize() {}
 void Renderer::initialize(int w, int h) {}
 void Renderer::setNormalizedEyeSeparation(float e) {}
+void Renderer::toggleDebugMode() {}
 float Renderer::getNormalizedEyeSeparation() {return 0.0f;}
 
 void Renderer::setProjectionMatrix(QMatrix4x4 p) {}

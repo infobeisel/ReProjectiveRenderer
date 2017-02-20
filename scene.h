@@ -54,7 +54,7 @@ private:
     QString name; //name of the scene file
     QString basePath; //path to the scene file
 
-    //vector holding the opaque nodes
+    //vector holding the opaque nodes NOTE: rendering does not use this yet.
     QVector<Node> transparentNodes;
     QVector<Node> opaqueNodes;
 

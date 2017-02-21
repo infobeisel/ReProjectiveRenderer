@@ -23,7 +23,8 @@ SOURCES += main.cpp \
     renderer.cpp \
     reprojectivestereoscopicrenderer.cpp \
     reprojectionerrorrenderer.cpp \
-    utils/CatmullRomSpline.cpp
+    utils/CatmullRomSpline.cpp \
+    utils/cameratour.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -54,7 +55,8 @@ HEADERS += \
     reprojectivestereoscopicrenderer.h \
     reprojectionerrorrenderer.h \
     utils/CatmullRomSpline.h \
-    utils/Spline.h
+    utils/Spline.h \
+    utils/cameratour.h
 
 #added assimp as external library in the project directory...
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/assimp/lib/release/ -lassimp

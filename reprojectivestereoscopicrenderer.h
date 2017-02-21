@@ -17,7 +17,7 @@ public:
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
     void toggleDebugMode() override;
-private:
+protected:
     enum {Color, Exchange, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};
     void initializeFBO(int fboIndex, int w, int h);

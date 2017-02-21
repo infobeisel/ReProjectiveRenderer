@@ -159,7 +159,7 @@ void main() {
 
         bvec3 isSpecular;
         isSpecular = equal(Ks, vec3(0.0,0.0,0.0));
-        isSpecular.x = isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false;
+        isSpecular.x = (isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false) && rightEyeCameraSpaceDepth < 0.005f;
         bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
         if(outsideViewFrustum

@@ -3,6 +3,7 @@
 #include "canonicalmonoscopicrenderer.h"
 #include "canonicalstereoscopicrenderer.h"
 #include "reprojectivestereoscopicrenderer.h"
+#include "reprojectionerrorrenderer.h"
 #include "scene.h"
 #include <QCoreApplication>
 #include <fstream>

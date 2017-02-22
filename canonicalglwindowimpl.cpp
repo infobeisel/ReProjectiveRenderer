@@ -37,6 +37,13 @@ void CanonicalGLWindowImpl::initializeGL() {
     scene->load(renderer->getShaderProgram());
     scene->bind(renderer->getShaderProgram());
 
+    qDebug() << paths.at(0) << "  " << paths.at(1) << "  "<< paths.at(2) << "  "<< paths.at(3) ;
+    if(paths.size() > 2) { //assume that second one has to be a scene containing camera positions for a camera tour
+        camTour = new CameraTour(paths.at(1));
+        camTour->load();
+    }
+
+
     //movement
     lastCursorPos = QVector<int>();
     lastCursorPos.push_back(QCursor::pos().x());
@@ -46,6 +53,8 @@ void CanonicalGLWindowImpl::initializeGL() {
     viewAngles.push_back(0.0f);
     cameraPosition = QVector3D(0.0f,0.0f,0.0f);
     moveDir= QVector3D(0.0f,0.0f,0.0f);
+
+    time.start();
 }
 
 void CanonicalGLWindowImpl::resizeGL(int w, int h) {
@@ -65,13 +74,35 @@ void CanonicalGLWindowImpl::paintGL() {
 
 
 
+
+
+    //manual movement
     //tell the shader the camera world pos
     renderer->setCameraPosition(cameraPosition);
     renderer->setCameraOrientation(cameraOrientation);
-
-
     QMatrix4x4 nView = QMatrix4x4();
     handleCursor(&nView);
+
+    //animated movement
+    if(camTour->isValid()) {
+        float t =  ( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds;
+        qDebug() << t ;
+        if(t < 1.0f) { //camera animation has not ended yet
+            QVector3D position;
+            QVector3D dir;
+            QVector3D up;
+            camTour->getPositionTangentNormal(t,position,dir,up);
+            cameraPosition = position;
+            QVector3D third = QVector3D::crossProduct(dir,up);
+            cameraOrientation = QQuaternion::fromDirection(dir, third);
+            nView.setToIdentity();
+            nView.lookAt(cameraPosition,cameraPosition + up,third);
+
+        }
+    }
+
+
+
     renderer->setViewMatrix(nView);
     timer = QElapsedTimer();
     timer.start();

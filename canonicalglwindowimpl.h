@@ -7,7 +7,11 @@
 #include <QKeyEvent>
 #include "renderer.h"
 #include "canonicalstereoscopicrenderer.h"
- #include <QElapsedTimer>
+#include <QElapsedTimer>
+#include "utils/cameratour.h"
+#include <QTime>
+#define CameraTourDurationInSeconds 10.0f
+
 class CanonicalGLWindowImpl : public QOpenGLWindow
 {
 public:
@@ -32,10 +36,16 @@ private:
     QVector3D moveDir; //Vector that shows into the world coordinate direction (depending to wasd keys), where to move the camera
     QVector<int> lastCursorPos;//member to calculate the mouse movement since last frame
     QVector<float> viewAngles; //x-axis and y-axis angles in degrees
+    //camera move animation
+    CameraTour* camTour;
+
+
     //the scene to be rendered
     Scene* scene;
 
+
     QElapsedTimer timer;
+    QTime time;
     bool shiftKeyHeld;
     bool spaceKeyHeld;
 

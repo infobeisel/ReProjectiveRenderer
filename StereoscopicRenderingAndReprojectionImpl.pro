@@ -56,7 +56,8 @@ HEADERS += \
     reprojectionerrorrenderer.h \
     utils/CatmullRomSpline.h \
     utils/Spline.h \
-    utils/cameratour.h
+    utils/cameratour.h \
+    utils/assimpscenesearch.h
 
 #added assimp as external library in the project directory...
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/assimp/lib/release/ -lassimp

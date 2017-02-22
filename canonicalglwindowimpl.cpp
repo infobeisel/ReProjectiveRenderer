@@ -86,18 +86,20 @@ void CanonicalGLWindowImpl::paintGL() {
     //animated movement
     if(camTour->isValid()) {
         float t =  ( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds;
+        //t /= CameraTourDurationInSeconds;
         qDebug() << t ;
         if(t < 1.0f) { //camera animation has not ended yet
             QVector3D position;
             QVector3D dir;
             QVector3D up;
-            camTour->getPositionTangentNormal(t,position,dir,up);
+            camTour->getPositionForwardUp(t,position,dir,up);
             cameraPosition = position;
-            QVector3D third = QVector3D::crossProduct(dir,up);
-            cameraOrientation = QQuaternion::fromDirection(dir, third);
+            QVector3D cross = QVector3D::crossProduct(up,dir);
+            cameraOrientation = QQuaternion::fromDirection(cross.normalized(), up.normalized());
+            renderer->setCameraPosition(cameraPosition);
+            renderer->setCameraOrientation(cameraOrientation);
             nView.setToIdentity();
-            nView.lookAt(cameraPosition,cameraPosition + up,third);
-
+            nView.lookAt(cameraPosition,cameraPosition + cross,up);
         }
     }
 

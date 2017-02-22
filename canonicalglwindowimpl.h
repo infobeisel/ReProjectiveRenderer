@@ -10,7 +10,7 @@
 #include <QElapsedTimer>
 #include "utils/cameratour.h"
 #include <QTime>
-#define CameraTourDurationInSeconds 10.0f
+#define CameraTourDurationInSeconds 20.0f
 
 class CanonicalGLWindowImpl : public QOpenGLWindow
 {

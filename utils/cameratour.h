@@ -21,7 +21,7 @@ public:
     CameraTour(QString pathToFile);
     ~CameraTour();
     void load(); // loads the fbx file containing the sequence of camera positons to generate the camera tour.
-    void getPositionTangentNormal(float normalizedTime,QVector3D& position,QVector3D& tangent, QVector3D& normal);
+    void getPositionForwardUp(float normalizedTime,QVector3D& position,QVector3D& frwd, QVector3D& up);
     bool isValid();
 private:
 
@@ -30,7 +30,9 @@ private:
     Assimp::Importer importer;
     QString name; //name of the scene file
     QString basePath; //path to the scene file
-    Framework::Math::Spline* tour;
+    Framework::Math::Spline* tour; //positions
+    Framework::Math::Spline* forwards;//forward vectors
+    Framework::Math::Spline* ups;//up vectors
     bool valid;
 };
 

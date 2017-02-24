@@ -1,10 +1,8 @@
 #version 410 core
 
-//1 pixel bias when sampling
-#define exchangeBufferSampleBias 1.0f
-#define NearClippingPlane 0.3f
-#define FarClippingPlane 10000.0f
-#define MY_GL_TEXTURE_MAX_LOD 1000.0f
+const float NearClippingPlane = 0.3f;
+const float FarClippingPlane = 10000.0f;
+const float MY_GL_TEXTURE_MAX_LOD = 1000.0f;
 layout(location = 0 ) out vec4 color;
 layout(location = 1 ) out vec4 exchangeBuffer;
 
@@ -147,15 +145,15 @@ void fullRenderPass() {
 
     //store depth data
     if(eyeIndex == 0) {
-        vec2 lod = textureQueryLod(diffuseSampler,vec2(interpolatedUV.x  ,interpolatedUV.y));
         float depth = - cameraSpacePos.z / FarClippingPlane ; // z is in negative in opengl camera space. division by far plane to get normalized value
-        //exchangeBuffer = vec4(dFdx(interpolatedUV.x),dFdy(interpolatedUV.x),specContr.b,depth);
+
+        vec2 lod = textureQueryLod(diffuseSampler,vec2(interpolatedUV.x  ,interpolatedUV.y));
 
         //calculate specular contribution for right eye in left eye pass, write error in exchange buffer
         vec3 tSpecError = specContr.rgb - specContrRight.rgb;
         float specError = abs(tSpecError.r)+abs(tSpecError.g)+abs(tSpecError.b);
 
-        exchangeBuffer = vec4(0.0,0.0,specError,depth);
+        exchangeBuffer = vec4(0.0,lod.y,specError,depth);
     }
 }
 
@@ -192,9 +190,15 @@ void main() {
         //calculate if outside the view frustum
         bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
+        //calculate over/undersampling error
+        float lodReprojected = exchangeBufferData.g;
+        vec2 lod = textureQueryLod(diffuseSampler,vec2(interpolatedUV.x  ,interpolatedUV.y));
+        float lodError = abs(lodReprojected - lod.y);
+
         if(outsideViewFrustum
          || d  > depthThreshold
-         || (isSpecular.x && specError > 0.001f) ) {
+         || (isSpecular.x && specError > 0.001f)
+         || (lodError > 0.5f)                  ) {
 
             if(debugMode == 1) fullRenderPass();
             else {
@@ -204,6 +208,8 @@ void main() {
                     color = vec4(0.0,(d - depthThreshold)/ depthThreshold,0.0,1.0); //d-t/t =
                 } else if ((isSpecular.x && specError > 0.001f)) { // if specular,blue
                     color = vec4(0.0,0.0,1.0,1.0);
+                } else if ((lodError > 0.5f)) {// undersampled areas : yellow
+                    color = vec4(1.0,1.0,0.0,1.0);
                 }
             }
         } else {

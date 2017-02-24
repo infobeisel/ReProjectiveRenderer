@@ -19,18 +19,14 @@ void CanonicalMonoscopicRenderer::draw(Scene* s) {
 
     // Clear color and depth buffers
     GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //zPrepass
 
-    shaderProgram.setUniformValue("zPrepass",true);
-    s->draw(&shaderProgram,view,projection, TRANSPARENT|OPAQUE);
+    shaderProgram.setUniformValue( "P", projection );
 
     //first draw opaque, then transparent
-    shaderProgram.setUniformValue("zPrepass",false);
-    GL.glDisable(GL_BLEND);
+    shaderProgram.setUniformValue("eyeIndex",0);
+    shaderProgram.setUniformValue( "V", view );
     s->draw(&shaderProgram,view,projection, OPAQUE);
-    GL.glEnable(GL_BLEND);
-    GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,view,projection, TRANSPARENT);
+
 
 }
 void CanonicalMonoscopicRenderer::initialize(int w, int h) {
@@ -73,8 +69,8 @@ void CanonicalMonoscopicRenderer::initialize() {
     projection.perspective(
                 FOV,          // field of vision
                 aspect,         // aspect ratio
-                0.3f,           // near clipping plane
-                10000.0f);       // far clipping plane
+                NearClippingPlane,           // near clipping plane
+                FarClippingPlane);       // far clipping plane
 
     //will be modified later
     GL.glEnable(GL_DEPTH_TEST);

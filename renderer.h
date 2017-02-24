@@ -5,6 +5,9 @@ class Scene;
 #include <QMatrix4x4>
 #include <QVector3D>
 #include <QQuaternion>
+#define FarClippingPlane 10000.0f
+#define NearClippingPlane 0.3f
+#define MAX_EYE_SEPARATION 7.0f
 
 class Renderer
 {

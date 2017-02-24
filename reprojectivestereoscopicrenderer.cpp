@@ -1,6 +1,5 @@
 #include "reprojectivestereoscopicrenderer.h"
 
-#define MAX_EYE_SEPARATION 7.0f
 ReprojectiveStereoscopicRenderer::ReprojectiveStereoscopicRenderer()
 {
     normalizedEyeSeparation = 1.0f;
@@ -37,13 +36,18 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     QMatrix4x4 viewRight;
     viewRight.setToIdentity();
     viewRight.lookAt(cameraPosition + (right * eyeSeparation / 2.0f) , cameraPosition + (right * eyeSeparation / 2.0f) + forward,up);
+
+    QVector3D originalCameraPosition = cameraPosition;
+    QVector3D leftCameraPosition = originalCameraPosition - (right * eyeSeparation / 2.0f);
+    QVector3D rightCameraPosition = originalCameraPosition + (right * eyeSeparation / 2.0f);
+
     //position the viewports on the screen somehow
     int w = viewport[2];
     int h = viewport[3];
     //depth difference threshold to recognize non-reusable fragments
     //shaderProgram.setUniformValue( "depthDifThreshold", eyeSeparation );
-    //qDebug() <<  eyeSeparation /  10000.0f / 1000.0f;
-    shaderProgram.setUniformValue( "depthThreshold",eyeSeparation /  10000.0f / 10.0f );
+    //qDebug() <<  eyeSeparation /  FarClippingPlane / 1000.0f;
+    shaderProgram.setUniformValue( "depthThreshold",eyeSeparation / FarClippingPlane / 10.0f );
     //set projection matrix (which is the same for both eyes)
     shaderProgram.setUniformValue( "P", projection );
     shaderProgram.setUniformValue( "height", (float)h / 2.0f );
@@ -54,24 +58,26 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
     //draw to attachments
-    GLenum drawBufs[2] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
-    GL.glDrawBuffers(2,drawBufs);
+    GLenum drawBufs[3] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2};
+    GL.glDrawBuffers(3,drawBufs);
     GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition - (right * eyeSeparation / 2.0f) );
+    setCameraPosition(leftCameraPosition);
+    //set right camera position as well, used in fragment shader
+    shaderProgram.setUniformValue("rightCameraWorldPos",rightCameraPosition);
+
     shaderProgram.setUniformValue( "V", viewLeft );
     //first draw opaque. store depth values in exchange buffer
-    shaderProgram.setUniformValue("zPrepass",true);
     GL.glDisable(GL_BLEND);
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
 
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
     //draw to attachments
-    GL.glDrawBuffers(2,drawBufs);
+    GL.glDrawBuffers(3,drawBufs);
     GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     //bind "exchange" buffer for reading from the LEFT fbo
@@ -82,39 +88,40 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glActiveTexture(GL_TEXTURE1);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Color]);
     shaderProgram.setUniformValue("leftImageSampler" , 1);
+    //bind left image color buffer for reading
+    GL.glActiveTexture(GL_TEXTURE2);
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Exchange2]);
+    shaderProgram.setUniformValue("exchangeBuffer2Sampler" , 2);
 
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition + (right * eyeSeparation / 2.0f));
+    setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
-    shaderProgram.setUniformValue("zPrepass",true);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
 
 
     //transparent objects
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
-    GL.glDrawBuffers(2,drawBufs);
+    GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",0);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition - (right * eyeSeparation / 2.0f) );
+    setCameraPosition(leftCameraPosition);
     shaderProgram.setUniformValue( "V", viewLeft );
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
-    GL.glDrawBuffers(2,drawBufs);
+    GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition + (right * eyeSeparation / 2.0f));
+    setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
@@ -165,6 +172,14 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_RGBA32F  ,w,h,0,    GL_RGBA   , GL_FLOAT,NULL);
 
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2]);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_RGBA32F  ,w,h,0,    GL_RGBA   , GL_FLOAT,NULL);
+
+
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Depth]);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -176,6 +191,7 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[fboIndex]);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderbuffers[fboIndex][Color],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange],0);
+    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[fboIndex][Depth],0);
 
     GLenum status = GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);

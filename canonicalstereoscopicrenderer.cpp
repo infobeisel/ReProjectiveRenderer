@@ -1,6 +1,5 @@
 #include "canonicalstereoscopicrenderer.h"
 
-#define MAX_EYE_SEPARATION 7.0f
 CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 {
     normalizedEyeSeparation = 1.0f;
@@ -35,7 +34,9 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     QMatrix4x4 viewRight;
     viewRight.setToIdentity();
     viewRight.lookAt(cameraPosition + (right * eyeSeparation / 2.0f) , cameraPosition + (right * eyeSeparation / 2.0f) + forward,up);
-
+    QVector3D originalCameraPosition = cameraPosition;
+    QVector3D leftCameraPosition = originalCameraPosition - (right * eyeSeparation / 2.0f);
+    QVector3D rightCameraPosition = originalCameraPosition + (right * eyeSeparation / 2.0f);
 
 
     //position the viewports on the screen somehow
@@ -70,15 +71,13 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
     GL.glViewport( 0, 0,w,h/2 );
 
-    setCameraPosition(cameraPosition - (right * eyeSeparation / 2.0f) );
+    setCameraPosition(leftCameraPosition);
     shaderProgram.setUniformValue( "V", viewLeft );
 
     //first draw opaque, then transparent. store depth values in exchange buffer
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glDisable(GL_BLEND);
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
@@ -90,16 +89,14 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
 
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
-    shaderProgram.setUniformValue("eyeIndex",1);
+    shaderProgram.setUniformValue("eyeIndex",0);
     GL.glViewport( 0, 0,w,h/2 );
 
-    setCameraPosition(cameraPosition + (right * eyeSeparation / 2.0f));
+    setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);

@@ -48,7 +48,7 @@ void CameraTour::load()
                 //    aiVector3t<TReal>& pPosition) const
                 found->mTransformation.Decompose(tScl,q,tPos);
             }
-            cameraPosition = QVector3D(li->mPosition[0] + tPos[0],li->mPosition[1] + tPos[1],li->mPosition[2] + tPos[2]);
+            cameraPosition = QVector3D( tPos[0], tPos[1],tPos[2]);
             aiVector3D tl = li->mLookAt;//q.Rotate(li->mLookAt);
             cameraForward = QVector3D(tl[0],tl[1],tl[2]).normalized();
             tl = li->mUp;//q.Rotate(li->mUp);
@@ -66,10 +66,11 @@ void CameraTour::load()
     tour->FinalizeCreation();
     forwards->FinalizeCreation();
     ups->FinalizeCreation();
-    valid = true;
+    setValid(true);
 
 }
 bool CameraTour::isValid() {return valid;}
+void CameraTour::setValid(bool v) {valid = v;}
 void CameraTour::getPositionForwardUp(float normalizedTime,QVector3D& position,QVector3D& forward, QVector3D& up) {
     position = tour->GetPosition(normalizedTime);
     forward = forwards->GetPosition(normalizedTime);

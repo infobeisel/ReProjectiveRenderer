@@ -10,8 +10,9 @@
 #include <QElapsedTimer>
 #include "utils/cameratour.h"
 #include <QTime>
+#include "utils/csvfilehandle.h"
 #define CameraTourDurationInSeconds 20.0f
-
+#define NearClippingPlane 0.3f
 class CanonicalGLWindowImpl : public QOpenGLWindow
 {
 public:
@@ -46,6 +47,7 @@ private:
 
     QElapsedTimer timer;
     QTime time;
+    CSVFileHandle<int> fpsLogger;
     bool shiftKeyHeld;
     bool spaceKeyHeld;
 

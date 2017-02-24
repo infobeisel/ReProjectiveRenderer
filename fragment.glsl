@@ -2,6 +2,9 @@
 
 //1 pixel bias when sampling
 #define exchangeBufferSampleBias 1.0f
+#define NearClippingPlane 0.3f
+#define FarClippingPlane 10000.0f
+#define MY_GL_TEXTURE_MAX_LOD 1000.0f
 layout(location = 0 ) out vec4 color;
 layout(location = 1 ) out vec4 exchangeBuffer;
 
@@ -20,20 +23,20 @@ struct LightSource {
 uniform int debugMode;
 
 //Stereoscopic related
-uniform bool zPrepass;
 uniform int eyeIndex;
 uniform float eyeSeparation; // in centimeters
+uniform vec3 rightCameraWorldPos;
 uniform float depthThreshold; //threshold for discriminating occluded fragments from reusable fragments
-
 uniform mat4 V;
 uniform mat4 P;
 uniform float width;
 uniform float height;
-layout(location = 1) in vec4 cameraSpacePos;
+layout(location = 1) in vec4 cameraSpacePos; //fragment in camera space coordinates
 uniform sampler2D exchangeBufferSampler;
+uniform sampler2D exchangeBuffer2Sampler;
 uniform sampler2D leftImageSampler;
 //---------------------
-uniform vec3 cameraWorldPos;
+uniform vec3 cameraWorldPos; // the camera's world position
 
 uniform vec3 Ka;
 uniform vec3 Kd;
@@ -47,7 +50,7 @@ uniform mat4 MV;
 
 
 uniform int lightCount;
-const int maxLightCount = 10;
+const int maxLightCount = 20;
 uniform LightSource lights[maxLightCount];
 
 layout(location = 2) in vec2 interpolatedUV;
@@ -85,6 +88,11 @@ void fullRenderPass() {
         textureColorAmb =  texture(ambientSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,ambientTextureArrayIndex))*  vec4(Ka,1.0f);
     if(specularTextureArrayIndex >= 0.0f)
         textureColorSpec =  texture(specularSampler,vec3(interpolatedUV.x  ,interpolatedUV.y ,specularTextureArrayIndex))*  vec4(Ks,1.0f);
+
+    //calculate specular contribution for right eye in left eye pass, write error in exchange buffer
+    vec3 vRight = normalize(rightCameraWorldPos - interpolatedPos); //world coordinate direction
+    vec4 specContrRight = vec4(0.0);
+
     //treat them as point lights
     for(int i = 0; i < lightCount; i++) {
         //lights
@@ -105,6 +113,7 @@ void fullRenderPass() {
             //d−2(d⋅n)n
             vec3 rl = normalize ( -l - 2 * dot(-l , n) * n );
             float RLV = max(dot(rl,v),0.0);
+
             vec3 d = (Kd * lights[i].diffuse);
             vec3 a = (Ka * lights[i].ambient);
             vec3 s = (Ks * lights[i].specular);
@@ -116,6 +125,16 @@ void fullRenderPass() {
             diffContr += vec4(d,1.0);
             ambContr += vec4(a,1.0);
             specContr += vec4(s,1.0);
+
+            //calculate specular contribution for right eye in left eye pass, write error in exchange buffer
+            if(eyeIndex == 0) {
+                float RLVRight = max(dot(rl,vRight),0.0);
+                vec3 s = (Ks * lights[i].specular);
+                s *= pow(RLVRight,specularExponent);
+                s *= atten;
+                specContrRight += vec4(s,1.0);
+            }
+
         }
     }
     vec4 tColour = specContr * textureColorSpec + ambContr * textureColorAmb +  diffContr * textureColorDif;
@@ -127,9 +146,16 @@ void fullRenderPass() {
 
 
     //store depth data
-    if(zPrepass) {
-        float depth = - cameraSpacePos.z / 10000.0f ; // z is in negative in opengl camera space. division by far plane to get normalized value
-        exchangeBuffer = vec4(0.0f,depth,0.0,1.0);
+    if(eyeIndex == 0) {
+        vec2 lod = textureQueryLod(diffuseSampler,vec2(interpolatedUV.x  ,interpolatedUV.y));
+        float depth = - cameraSpacePos.z / FarClippingPlane ; // z is in negative in opengl camera space. division by far plane to get normalized value
+        //exchangeBuffer = vec4(dFdx(interpolatedUV.x),dFdy(interpolatedUV.x),specContr.b,depth);
+
+        //calculate specular contribution for right eye in left eye pass, write error in exchange buffer
+        vec3 tSpecError = specContr.rgb - specContrRight.rgb;
+        float specError = abs(tSpecError.r)+abs(tSpecError.g)+abs(tSpecError.b);
+
+        exchangeBuffer = vec4(0.0,0.0,specError,depth);
     }
 }
 
@@ -140,7 +166,7 @@ void fullRenderPass() {
 
 void main() {
 
-   if(zPrepass && eyeIndex == 1) { //right eye z prepass
+   if(transparency == 0.0 && eyeIndex == 1) { //transparent objects get always rerendered
         //perform reprojection
         //right camera space position + translation resulting from eye separation = left camera space position
         vec4 leftCameraSpacePos = cameraSpacePos + vec4(eyeSeparation ,0.0,0.0,1.0);
@@ -150,21 +176,25 @@ void main() {
         uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
         uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image
 
-        //float onePixel = (1.0f/width);
+        vec4 exchangeBufferData = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
 
-        vec4 r = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
-        float leftEyeCameraSpaceDepth = r.g;
-        float rightEyeCameraSpaceDepth = - cameraSpacePos.z / 10000.0f ;
+        //calculate depth difference
+        float leftEyeCameraSpaceDepth = exchangeBufferData.a;
+        float rightEyeCameraSpaceDepth = - cameraSpacePos.z / FarClippingPlane ;
         float d = abs(leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference
 
+        //specular error
         bvec3 isSpecular;
         isSpecular = equal(Ks, vec3(0.0,0.0,0.0));
-        isSpecular.x = (isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false) && rightEyeCameraSpaceDepth < 0.005f;
+        isSpecular.x = (isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false);
+        float specError = exchangeBufferData.b;
+
+        //calculate if outside the view frustum
         bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
         if(outsideViewFrustum
          || d  > depthThreshold
-         || isSpecular.x ) {
+         || (isSpecular.x && specError > 0.001f) ) {
 
             if(debugMode == 1) fullRenderPass();
             else {
@@ -172,14 +202,13 @@ void main() {
                     color = vec4(1.0,0.0,0.8,1.0);
                 } else if (d  > depthThreshold) { //green for fragments that don't pass the depth comparison test
                     color = vec4(0.0,(d - depthThreshold)/ depthThreshold,0.0,1.0); //d-t/t =
-                } else if (isSpecular.x) { // if specular,blue
+                } else if ((isSpecular.x && specError > 0.001f)) { // if specular,blue
                     color = vec4(0.0,0.0,1.0,1.0);
                 }
             }
         } else {
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
         }
-
 
     } else {
         fullRenderPass();

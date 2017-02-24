@@ -23,6 +23,7 @@ public:
     void load(); // loads the fbx file containing the sequence of camera positons to generate the camera tour.
     void getPositionForwardUp(float normalizedTime,QVector3D& position,QVector3D& frwd, QVector3D& up);
     bool isValid();
+    void setValid(bool v);
 private:
 
     //the importer object and the scene from assimp

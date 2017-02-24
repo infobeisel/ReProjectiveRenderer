@@ -1,7 +1,7 @@
 #ifndef OPENGLFUNCTIONS_H
 #define OPENGLFUNCTIONS_H
-
-#define GL OpenGLFunctions::instance()
+#include <typeinfo>
+#define GL OpenGLFunctions::instance(typeid(this).name())
 
 #include <QOpenGLFunctions_4_1_Core>
 #include <QDebug>
@@ -11,7 +11,7 @@ class OpenGLFunctions : public QOpenGLFunctions_4_1_Core
 
 public:
 
-    void CheckGLError()
+    void CheckGLError(std::string tClassName)
     {
         auto errorCode = glGetError();
 
@@ -24,13 +24,13 @@ public:
             //GetTypeString(type, typeString);
             //GetSeverityString(severity, severityString);
             GetErrorIdString(errorCode, errorIdString);
-            qDebug() << "An OpenGL error has been occured: " <<QString::fromStdString(errorIdString) << "\n";
+            qDebug() << "An OpenGL error has been occured: " << QString::fromStdString(tClassName) << " " <<QString::fromStdString(errorIdString) << "\n";
         }
     }
 
-    static OpenGLFunctions& instance() {
+    static OpenGLFunctions& instance(std::string className) {
         static OpenGLFunctions instance;
-        instance.CheckGLError();
+        instance.CheckGLError(className);
         return instance;
     }
 

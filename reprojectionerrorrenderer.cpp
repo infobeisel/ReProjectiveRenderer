@@ -1,5 +1,4 @@
 #include "reprojectionerrorrenderer.h"
-#define MAX_EYE_SEPARATION 7.0f
 
 ReprojectionErrorRenderer::ReprojectionErrorRenderer()
 {
@@ -21,12 +20,13 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     QMatrix4x4 viewRight;
     viewRight.setToIdentity();
     viewRight.lookAt(cameraPosition + (right * eyeSeparation / 2.0f) , cameraPosition + (right * eyeSeparation / 2.0f) + forward,up);
+    QVector3D originalCameraPosition = cameraPosition;
     //position the viewports on the screen somehow
     int w = viewport[2];
     int h = viewport[3];
     //depth difference threshold to recognize non-reusable fragments
     //shaderProgram.setUniformValue( "depthDifThreshold", eyeSeparation );
-    shaderProgram.setUniformValue( "depthThreshold", eyeSeparation /  10000.0f / 1000.0f );
+    shaderProgram.setUniformValue( "depthThreshold", eyeSeparation /  FarClippingPlane / 1000.0f );
     //set projection matrix (which is the same for both eyes)
     shaderProgram.setUniformValue( "P", projection );
     shaderProgram.setUniformValue( "height", (float)h / 2.0f );
@@ -44,10 +44,9 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition - (right * eyeSeparation / 2.0f) );
+    setCameraPosition(originalCameraPosition - (right * eyeSeparation / 2.0f) );
     shaderProgram.setUniformValue( "V", viewLeft );
     //first draw opaque. store depth values in exchange buffer
-    shaderProgram.setUniformValue("zPrepass",true);
     GL.glDisable(GL_BLEND);
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
 
@@ -70,9 +69,8 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition + (right * eyeSeparation / 2.0f));
+    setCameraPosition(originalCameraPosition + (right * eyeSeparation / 2.0f));
     shaderProgram.setUniformValue( "V", viewRight );
-    shaderProgram.setUniformValue("zPrepass",true);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
 
@@ -82,10 +80,9 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     GL.glDrawBuffers(2,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",0);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition - (right * eyeSeparation / 2.0f) );
+    setCameraPosition(originalCameraPosition - (right * eyeSeparation / 2.0f) );
     shaderProgram.setUniformValue( "V", viewLeft );
     GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
@@ -94,11 +91,10 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     GL.glDrawBuffers(2,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(cameraPosition + (right * eyeSeparation / 2.0f));
+    setCameraPosition(originalCameraPosition + (right * eyeSeparation / 2.0f));
     shaderProgram.setUniformValue( "V", viewRight );
     //in order to determine the reprojection error, transparent objects are not included because they are always rendered anyway
     /*GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);*/
@@ -112,16 +108,14 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,w,h/2 );
 
-    setCameraPosition(cameraPosition + (right * eyeSeparation / 2.0f));
+    setCameraPosition(originalCameraPosition + (right * eyeSeparation / 2.0f));
     shaderProgram.setUniformValue( "V", viewRight );
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc(GL_ONE, GL_ONE);
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
      GL.glDisable(GL_BLEND);
     /*GL.glEnable(GL_BLEND);
-    shaderProgram.setUniformValue("zPrepass",false);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
     GL.glDisable(GL_BLEND);*/

@@ -8,6 +8,8 @@
 #include <QCoreApplication>
 #include <fstream>
 
+#define LOCK_FPS_MS 11
+
 CanonicalGLWindowImpl::CanonicalGLWindowImpl()
 {
 
@@ -20,9 +22,11 @@ CanonicalGLWindowImpl::~CanonicalGLWindowImpl()
 void CanonicalGLWindowImpl::initializeGL() {
 
     //renderer = new CanonicalStereoscopicRenderer();
-    //timer.start();
+    timer.start();
     GL.glClear(0);
     renderer = new ReprojectiveStereoscopicRenderer();
+    //renderer = new CanonicalMonoscopicRenderer();
+    //renderer = new CanonicalStereoscopicRenderer();
     renderer->initialize();
 
     //load models
@@ -54,6 +58,9 @@ void CanonicalGLWindowImpl::initializeGL() {
     cameraPosition = QVector3D(0.0f,0.0f,0.0f);
     moveDir= QVector3D(0.0f,0.0f,0.0f);
 
+    //
+    fpsLogger = CSVFileHandle<int>(1700);
+
     time.start();
 }
 
@@ -61,7 +68,7 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     GL.glViewport( 0, 0, w, h );
     QMatrix4x4 nProj = QMatrix4x4();
     nProj.setToIdentity();
-    nProj.perspective(60.0f, (float)w/h, 0.3f, 10000);
+    nProj.perspective(FOV, (float)w/h, NearClippingPlane, FarClippingPlane);
     renderer->setProjectionMatrix(nProj);
     renderer->initialize(w,h);
 }
@@ -87,7 +94,6 @@ void CanonicalGLWindowImpl::paintGL() {
     if(camTour->isValid()) {
         float t =  ( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds;
         //t /= CameraTourDurationInSeconds;
-        qDebug() << t ;
         if(t < 1.0f) { //camera animation has not ended yet
             QVector3D position;
             QVector3D dir;
@@ -100,6 +106,9 @@ void CanonicalGLWindowImpl::paintGL() {
             renderer->setCameraOrientation(cameraOrientation);
             nView.setToIdentity();
             nView.lookAt(cameraPosition,cameraPosition + cross,up);
+        } else {
+            camTour->setValid(false); //end animation
+            fpsLogger.flush("asdasdasd");
         }
     }
 
@@ -110,6 +119,15 @@ void CanonicalGLWindowImpl::paintGL() {
     timer.start();
     renderer->draw(scene);
 
+    if(camTour->isValid()) fpsLogger.addValue((int)(1000.0f / (float)timer.elapsed()));
+
+    int msToWait = LOCK_FPS_MS - timer.elapsed();
+    #ifdef Q_OS_WIN
+        Sleep(uint(msToWait));
+    #else
+        struct timespec ts = { msToWait / 1000, (msToWait % 1000) * 1000 * 1000 };
+        nanosleep(&ts, NULL);
+    #endif
 
     //trigger an update so that this function gets called the next frame again
     QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
@@ -186,7 +204,7 @@ void CanonicalGLWindowImpl::keyPressEvent(QKeyEvent *ev) {
         default:
         break;
     }
-    float tspeed = 400.1f;
+    float tspeed = 100.1f;
     moveDir += t * tspeed ;
 }
 
@@ -217,6 +235,6 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         default:
         break;
     }
-    float tspeed = 400.1f;
+    float tspeed = 100.1f;
     moveDir -= t * tspeed ;
 }

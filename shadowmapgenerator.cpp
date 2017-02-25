@@ -104,6 +104,9 @@ void ShadowMapGenerator::draw(Scene* s) {
                 s->draw(&shaderProgram,view,projection, OPAQUE);
 
                GL.glDisable(GL_POLYGON_OFFSET_FILL);
+
+               //only render from the first occuring
+               break;
             }
         }
     }

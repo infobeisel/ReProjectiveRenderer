@@ -1,13 +1,22 @@
+#version 410 core
 // Shadow_Use_PCF.glsl
 
-#ifndef _SHADOW_USE_PCF_GLSL_
-#define _SHADOW_USE_PCF_GLSL_
+//
+//
 
-#include "Texture.glsl"
+//forward declarations
 
-#include "Sampling.glsl"
+extern uniform vec2 Poisson25[25];
+extern uniform vec2 Poisson64[64];
+extern uniform vec2 Poisson128[128];
+uint InitializeRandomSeed(uint idx);
+vec2 RotateVec2(vec2 baseVec, float amt);
+uint Random_Xorshift(inout uint seed);
+float Random(inout uint seed);
 
-DeclareTexture2DShadow(ShadowMap);
+
+
+uniform sampler2DShadow ShadowMap;
 
 uniform vec3 ShadowCameraPosition;
 uniform mat4 ShadowCameraViewProjectionMatrix;
@@ -32,7 +41,6 @@ float GetUnocclusionFactor(vec3 worldPosition)
 	{
 		return 1.0;
 	}
-
 	uint seed = InitializeRandomSeed(uint(gl_FragCoord.y * SeedMultiplier + gl_FragCoord.x));
 	float rotationFrame = Random(seed);
 	vec2 pcfRadius = 2.0 / vec2(ShadowMapSize);
@@ -41,11 +49,11 @@ float GetUnocclusionFactor(vec3 worldPosition)
 	{
 		vec2 offset = Poisson25[i] * pcfRadius;
 		offset = RotateVec2(offset, rotationFrame);
-		unocclusion += SampleTexture2DShadow(ShadowMap, vec3(texCoord + offset, depth)).x;
+                float tmp = texture(ShadowMap, vec3(texCoord + offset, depth)); // texture with shadow maps returns float
+                unocclusion += tmp;
 	}
 	unocclusion /= CountShadowSamples;
 
 	return unocclusion;
 }
 
-#endif

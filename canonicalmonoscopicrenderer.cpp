@@ -1,5 +1,5 @@
 #include "canonicalmonoscopicrenderer.h"
-
+#include <QFile>
 CanonicalMonoscopicRenderer::CanonicalMonoscopicRenderer()
 {
 }
@@ -39,15 +39,28 @@ void CanonicalMonoscopicRenderer::initialize() {
 
 
     QString vertexShaderPath = ":/vertex.glsl";
-    QString fragmentShaderPath = ":/fragment.glsl";
-    //compile shaders
+
+    //compile vertex shader
     if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath.toUtf8() ) ) {
         qDebug() << "ERROR (vertex shader):" << shaderProgram.log();
     }
-    if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Fragment, fragmentShaderPath.toUtf8() ) ) {
-        qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
-    }
 
+
+    QVector<QString> fragmentShaderPaths = {
+        ":/shadowMappingShaders/Texture.glsl",
+        ":/shadowMappingShaders/Sampling.glsl",
+        ":/shadowMappingShaders/Shadow_Use_PCF.glsl",
+        ":/fragment.glsl"
+    };
+    //QString fragSourceCode = QString();
+    foreach (QString file , fragmentShaderPaths) {
+        QFile f(file);
+        if (!f.open(QFile::ReadOnly | QFile::Text)) break;
+        QTextStream in(&f);
+        if ( !shaderProgram.addShaderFromSourceCode( QOpenGLShader::Fragment, in.readAll()) ) {
+            qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
+        }
+    }
 
 
     if ( !shaderProgram.link() ) {

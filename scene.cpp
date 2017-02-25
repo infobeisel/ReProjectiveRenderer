@@ -49,7 +49,7 @@ void Scene::load(QOpenGLShaderProgram *toProgram) {
     //lights: read lightsources array
     QMap<QString,int> lightSourceNameToLightArrayIndex;
     if(s->HasLights()) {
-        for(int i = 0; i < s->mNumLights; i++) {
+        for(uint i = 0; i < s->mNumLights; i++) {
             aiLight* li = s->mLights[i];
             QString lightName = li->mName.data;
             //qDebug() << "found light in scene " << li->mName.data << " " << li->mType ;
@@ -277,7 +277,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
     withProgram->setUniformValue( "lightCount", s->mNumLights );
     //go through all lights and set the light uniforms
     if(s->HasLights()) {
-        for(int i = 0; i < s->mNumLights; i++) {
+        for(uint i = 0; i < s->mNumLights; i++) {
             aiLight* li = s->mLights[i];
             //position and direction are stored in the accordin node!
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].position").toStdString().c_str(),

@@ -1,11 +1,10 @@
+#version 410 core
 // Sampling.glsl
 
-#ifndef _SAMPLING_GLSL_
-#define _SAMPLING_GLSL_
 
 const float PI = 3.14159265;
 
-const vec2 Poisson25[25] = {
+uniform vec2 Poisson25[25] = {
     vec2(-0.978698, -0.0884121),
     vec2(-0.841121, 0.521165),
     vec2(-0.71746, -0.50322),
@@ -33,7 +32,7 @@ const vec2 Poisson25[25] = {
     vec2(0.991882, -0.657338)
 };
 
-const vec2 Poisson64[64] = {
+uniform vec2 Poisson64[64] = {
     vec2(-0.934812, 0.366741),
     vec2(-0.918943, -0.0941496),
     vec2(-0.873226, 0.62389),
@@ -100,7 +99,8 @@ const vec2 Poisson64[64] = {
     vec2(0.95294, 0.156896)
 };
 
-const vec2 Poisson128[128] = {
+
+uniform vec2 Poisson128[128] = {
     vec2(-0.9406119, 0.2160107),
     vec2(-0.920003, 0.03135762),
     vec2(-0.917876, -0.2841548),
@@ -235,43 +235,41 @@ const vec2 Poisson128[128] = {
 // This implementation uses the Wang hash function.
 uint InitializeRandomSeed(uint idx)
 {
-	uint seed = (idx ^ 61) ^ (idx >> 16);
-	seed *= 9;
-	seed = seed ^ (seed >> 4);
-	seed *= 0x27d4eb2d;
-	seed = seed ^ (seed >> 15);
-	return seed;
+        uint seed = (idx ^ 61) ^ (idx >> 16);
+        seed *= 9;
+        seed = seed ^ (seed >> 4);
+        seed *= 0x27d4eb2d;
+        seed = seed ^ (seed >> 15);
+        return seed;
 }
 
 // Random function using a XorShift algorithm.
 uint Random_Xorshift(inout uint seed)
 {
-	// Xorshift algorithm from George Marsaglia's paper
-	seed ^= (seed << 13);
-	seed ^= (seed >> 17);
-	seed ^= (seed << 5);
-	return seed;
+        // Xorshift algorithm from George Marsaglia's paper
+        seed ^= (seed << 13);
+        seed ^= (seed >> 17);
+        seed ^= (seed << 5);
+        return seed;
 }
 
 // Random function which returns values between 0 and 1.
 float Random(inout uint seed)
 {
-	return float(Random_Xorshift(seed)) * (1.0 / 4294967296.0);
+        return float(Random_Xorshift(seed)) * (1.0 / 4294967296.0);
 }
 
 // This utility function rotates a 2D vector using a value between 0-1.
 // (interpolating between 0 and 2 * PI radians)
 vec2 RotateVec2(vec2 baseVec, float amt)
 {
-	amt *= 2.0 * PI;
+        amt *= 2.0 * PI;
 
-	float cosAmt = cos(amt);
-	float sinAmt = sin(amt);
+        float cosAmt = cos(amt);
+        float sinAmt = sin(amt);
 
-	vec2 rX = vec2(cosAmt * baseVec.x, -sinAmt * baseVec.x);
-	vec2 rY = vec2(sinAmt * baseVec.y, cosAmt * baseVec.y);
+        vec2 rX = vec2(cosAmt * baseVec.x, -sinAmt * baseVec.x);
+        vec2 rY = vec2(sinAmt * baseVec.y, cosAmt * baseVec.y);
 
-	return rX + rY;
+        return rX + rY;
 }
-
-#endif

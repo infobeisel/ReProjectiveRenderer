@@ -1,5 +1,6 @@
 #version 410 core
 
+
 const float NearClippingPlane = 0.3f;
 const float FarClippingPlane = 10000.0f;
 const float MY_GL_TEXTURE_MAX_LOD = 1000.0f;

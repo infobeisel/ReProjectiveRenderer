@@ -14,6 +14,8 @@ public:
      */
     void draw(Scene* s) override;
     void saveToImage(QString path);
+    void setShadowMapVariables(QOpenGLShaderProgram* toShader);
+
 
 private:
     enum {Color,Depth ,NumRenderbuffers};

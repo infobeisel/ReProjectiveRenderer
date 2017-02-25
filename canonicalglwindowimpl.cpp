@@ -47,6 +47,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     shadows.draw(scene);
     shadows.saveToImage("test.png");
 
+
     qDebug() << paths.at(0) << "  " << paths.at(1) << "  "<< paths.at(2) << "  "<< paths.at(3) ;
     if(paths.size() > 2) { //assume that second one has to be a scene containing camera positions for a camera tour
         camTour = new CameraTour(paths.at(1));
@@ -122,6 +123,9 @@ void CanonicalGLWindowImpl::paintGL() {
         }
     }
 
+
+    //shadow map uniforms
+    shadows.setShadowMapVariables(renderer->getShaderProgram());
 
 
     renderer->setViewMatrix(nView);

@@ -77,6 +77,7 @@ void ShadowMapGenerator::draw(Scene* s) {
                 QVector3D tPos2 = lightPosition + lightDirection;
                 QVector3D up = QVector3D::crossProduct(lightPosition,tPos2);
 
+                cameraPosition = lightPosition;
 
 
 
@@ -113,6 +114,17 @@ void ShadowMapGenerator::draw(Scene* s) {
 
 
 }
+void ShadowMapGenerator::setShadowMapVariables(QOpenGLShaderProgram* toShader) {
+    //make shadow map accessble in shader
+    GL.glActiveTexture(GL_TEXTURE2);
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Depth]);
+    toShader->setUniformValue("ShadowMap" , 2);
+    toShader->setUniformValue("ShadowCameraPosition",cameraPosition);
+    QMatrix4x4 viewProj = projection * view;
+    toShader->setUniformValue("ShadowCameraViewProjectionMatrix",viewProj);
+    toShader->setUniformValue("ShadowMapSize",QVector2D((float)mapResolution[0],(float)mapResolution[1]));
+
+}
 
 void ShadowMapGenerator::saveToImage(QString path) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[Shadow]);
@@ -123,7 +135,6 @@ void ShadowMapGenerator::saveToImage(QString path) {
     i.save(path);
 
 }
-
 
 void ShadowMapGenerator::initialize() {initialize(1024,1024);}
 

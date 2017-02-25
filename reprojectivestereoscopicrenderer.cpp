@@ -88,10 +88,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glActiveTexture(GL_TEXTURE1);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Color]);
     shaderProgram.setUniformValue("leftImageSampler" , 1);
-    //bind left image color buffer for reading
-    GL.glActiveTexture(GL_TEXTURE2);
-    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Exchange2]);
-    shaderProgram.setUniformValue("exchangeBuffer2Sampler" , 2);
+
 
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
@@ -172,12 +169,6 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_RGBA32F  ,w,h,0,    GL_RGBA   , GL_FLOAT,NULL);
 
-    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2]);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_RGBA32F  ,w,h,0,    GL_RGBA   , GL_FLOAT,NULL);
 
 
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Depth]);
@@ -191,7 +182,6 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[fboIndex]);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderbuffers[fboIndex][Color],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange],0);
-    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[fboIndex][Depth],0);
 
     GLenum status = GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);

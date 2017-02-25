@@ -21,7 +21,7 @@ uniform sampler2DShadow ShadowMap;
 uniform vec3 ShadowCameraPosition;
 uniform mat4 ShadowCameraViewProjectionMatrix;
 
-uniform uvec2 ShadowMapSize;
+uniform vec2 ShadowMapSize;
 
 const float SeedMultiplier = 9999;
 
@@ -43,17 +43,21 @@ float GetUnocclusionFactor(vec3 worldPosition)
 	}
 	uint seed = InitializeRandomSeed(uint(gl_FragCoord.y * SeedMultiplier + gl_FragCoord.x));
 	float rotationFrame = Random(seed);
-	vec2 pcfRadius = 2.0 / vec2(ShadowMapSize);
-	float unocclusion = 0.0;
-	for (int i = 0; i < CountShadowSamples; ++i)
-	{
-		vec2 offset = Poisson25[i] * pcfRadius;
-		offset = RotateVec2(offset, rotationFrame);
-                float tmp = texture(ShadowMap, vec3(texCoord + offset, depth)); // texture with shadow maps returns float
-                unocclusion += tmp;
-	}
-	unocclusion /= CountShadowSamples;
+        //vec2 pcfRadius = 2.0 / vec2(ShadowMapSize);
+        vec2 pcfRadius =  vec2(2.0f / float(ShadowMapSize.x),2.0f / float(ShadowMapSize.y));
+        float unocclusion = 0.0f;
 
+        for (int i = 0; i < CountShadowSamples; ++i)
+	{
+
+                vec2 offset = Poisson25[i] * pcfRadius;
+		offset = RotateVec2(offset, rotationFrame);
+                float tmp = float(texture(ShadowMap, vec3(texCoord + offset, depth))); // texture with shadow maps returns float
+
+                unocclusion += tmp;
+        }
+
+        unocclusion *= ( 1.0f /float(CountShadowSamples));
 	return unocclusion;
 }
 

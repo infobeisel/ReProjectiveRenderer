@@ -11,6 +11,7 @@
 #include "utils/cameratour.h"
 #include <QTime>
 #include "utils/csvfilehandle.h"
+#include "shadowmapgenerator.h"
 #define CameraTourDurationInSeconds 20.0f
 #define NearClippingPlane 0.3f
 class CanonicalGLWindowImpl : public QOpenGLWindow
@@ -43,6 +44,8 @@ private:
 
     //the scene to be rendered
     Scene* scene;
+
+    ShadowMapGenerator shadows;
 
 
     QElapsedTimer timer;

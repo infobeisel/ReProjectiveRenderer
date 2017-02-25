@@ -37,9 +37,15 @@ void CanonicalGLWindowImpl::initializeGL() {
     QStringList paths = QString::fromStdString(contents).split("\n");
 
 
+
     scene = new Scene(paths.at(0));
     scene->load(renderer->getShaderProgram());
     scene->bind(renderer->getShaderProgram());
+
+    //shadows
+    shadows.initialize(1024,1024);
+    shadows.draw(scene);
+    shadows.saveToImage("test.png");
 
     qDebug() << paths.at(0) << "  " << paths.at(1) << "  "<< paths.at(2) << "  "<< paths.at(3) ;
     if(paths.size() > 2) { //assume that second one has to be a scene containing camera positions for a camera tour
@@ -62,6 +68,9 @@ void CanonicalGLWindowImpl::initializeGL() {
     fpsLogger = CSVFileHandle<int>(1700);
 
     time.start();
+
+
+
 }
 
 void CanonicalGLWindowImpl::resizeGL(int w, int h) {
@@ -69,6 +78,7 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     QMatrix4x4 nProj = QMatrix4x4();
     nProj.setToIdentity();
     nProj.perspective(FOV, (float)w/h, NearClippingPlane, FarClippingPlane);
+    //nProj.ortho(-(float)w/2.0f,(float)w/2.0f,-(float)h/2.0f,(float)h/2.0f,NearClippingPlane,FarClippingPlane);
     renderer->setProjectionMatrix(nProj);
     renderer->initialize(w,h);
 }

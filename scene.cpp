@@ -18,6 +18,10 @@ Scene::~Scene()
     delete textureManager;
 }
 
+const aiScene* Scene::getAiScene() {
+    return s;
+}
+
 /**
  * @brief reads the file which was specified by fullPath param in the constructor and generates and fills opengl buffer objects
  * NOTE: assumes 1 uv channel for each vertex, ignores the rest (during rendering the same uv coord is used for every texture lookup, if a mesh has multiple textures)

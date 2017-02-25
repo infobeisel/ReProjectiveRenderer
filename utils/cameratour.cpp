@@ -39,7 +39,7 @@ void CameraTour::load()
     if(s->HasCameras() && s->mNumCameras > 4) {
         for(int i = 0; i < s->mNumCameras; i++) {
             aiCamera* li = s->mCameras[i];
-            aiNode* found = AssimSceneSearch::find(QString(li->mName.data),s->mRootNode);
+            aiNode* found = AssimpSceneSearch::find(QString(li->mName.data),s->mRootNode);
             aiVector3t<float> tPos = aiVector3t<float>(0.0f,0.0f,0.0f);
             aiVector3t<float> tScl = aiVector3t<float>(0.0f,0.0f,0.0f);
             aiQuaterniont<float> q = aiQuaterniont<float>();

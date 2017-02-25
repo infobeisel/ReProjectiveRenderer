@@ -2,5 +2,11 @@
     <qresource prefix="/">
         <file>fragment.glsl</file>
         <file>vertex.glsl</file>
+	<file>genShadowMapFrag.glsl</file>
+        <file>genShadowMapVert.glsl</file>
+	<file>shadowMappingShaders/Sampling.glsl</file>
+	<file>shadowMappingShaders/Shadow_Use_PCF.glsl</file>
+	<file>shadowMappingShaders/Texture.glsl</file>
+
     </qresource>
 </RCC>

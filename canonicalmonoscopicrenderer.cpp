@@ -72,6 +72,9 @@ void CanonicalMonoscopicRenderer::initialize() {
                 NearClippingPlane,           // near clipping plane
                 FarClippingPlane);       // far clipping plane
 
+    //projection.ortho(-512.0f,512.0f,-512.0f,512.0f,NearClippingPlane,FarClippingPlane);
+
+
     //will be modified later
     GL.glEnable(GL_DEPTH_TEST);
     GL.glDepthFunc(GL_LESS);

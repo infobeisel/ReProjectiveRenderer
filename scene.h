@@ -44,6 +44,9 @@ public:
     void bind(QOpenGLShaderProgram *toProgram); //bind everything and set attribute pointers
     //draw this scene
     void draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix,materialClassifier materialTypes);
+
+    const aiScene*  getAiScene();
+
 private:
     QOpenGLVertexArrayObject vertexArrayObject;
     QOpenGLBuffer vertexBufferObject;

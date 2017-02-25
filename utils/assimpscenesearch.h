@@ -5,7 +5,7 @@
 #include <QString>
 #include <QVector>
 
-class AssimSceneSearch
+class AssimpSceneSearch
 {
 public:
     static aiNode* find(QString name,aiNode* root) {

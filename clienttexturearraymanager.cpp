@@ -89,7 +89,7 @@ void ClientTextureArrayManager::loadToServer() {
                             clientTex->width(),clientTex->height(),1,
                             format,         // format
                             GL_UNSIGNED_BYTE, // type
-                            clientTex->image()->bits());
+                            clientTex->image    ()->bits());
 
         }
 

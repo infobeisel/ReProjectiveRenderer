@@ -43,7 +43,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     scene->bind(renderer->getShaderProgram());
 
     //shadows
-    shadows.initialize(1024,1024);
+    shadows.initialize(2048,2048);
     shadows.draw(scene);
     shadows.saveToImage("test.png");
 

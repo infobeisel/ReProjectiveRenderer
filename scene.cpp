@@ -279,11 +279,17 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
     if(s->HasLights()) {
         for(uint i = 0; i < s->mNumLights; i++) {
             aiLight* li = s->mLights[i];
-            //position and direction are stored in the accordin node!
+            //position and direction are stored in the according node!
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].position").toStdString().c_str(),
                                           (QVector3D(li->mPosition.x,li->mPosition.y,li->mPosition.z)) ); //world coordinates
-            withProgram->setUniformValue( QString("lights["+QString::number(i)+"].direction").toStdString().c_str(),
-                                          QVector3D(li->mDirection.x,li->mDirection.y,li->mDirection.z));
+            //directional and point lights supported
+            if(li->mType == aiLightSource_DIRECTIONAL ) {
+                withProgram->setUniformValue( QString("lights["+QString::number(i)+"].direction").toStdString().c_str(),
+                                              QVector3D(li->mDirection.x,li->mDirection.y,li->mDirection.z));
+            } else {
+                withProgram->setUniformValue( QString("lights["+QString::number(i)+"].direction").toStdString().c_str(),
+                                              QVector3D(0.0f,0.0f,0.0f));
+            }
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].ambient").toStdString().c_str(),
                                           QVector3D(li->mColorAmbient.r,li->mColorAmbient.g,li->mColorAmbient.b) );
             withProgram->setUniformValue( QString("lights["+QString::number(i)+"].diffuse").toStdString().c_str(),

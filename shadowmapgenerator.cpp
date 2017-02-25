@@ -63,7 +63,8 @@ void ShadowMapGenerator::draw(Scene* s) {
                 //in blender, the directional light is looking in -y direction when the transform rotation is the identity
                 aiMatrix3x3 rotation = aiMatrix3x3(found->mTransformation);
 
-                li->mDirection = rotation * aiVector3t<float>(0.0f,-1.0f,0.0f);/*
+                li->mDirection = rotation * aiVector3t<float>(0.0f,-1.0f,0.0f);
+                li->mDirection.Normalize();/*
                 aiVector3t<float> aiUp = rotation * aiVector3t<float>(0.0f,0.0f,1.0f);
                 QVector3D up = QVector3D(aiUp[0],aiUp[1],aiUp[2]);*/
 

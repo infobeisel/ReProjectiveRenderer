@@ -96,15 +96,28 @@ void fullRenderPass() {
     vec3 vRight = normalize(rightCameraWorldPos - interpolatedPos); //world coordinate direction
     vec4 specContrRight = vec4(0.0);
 
+
+
     //treat them as point lights
     for(int i = 0; i < lightCount; i++) {
         //lights
         float dist = distance(interpolatedPos,lights[i].position);
 
-        float atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * dist + lights[i].attenuationQuadratic * dist*dist);
 
-        //light direction (point light!)
-        vec3 l = normalize(lights[i].position - interpolatedPos); // world coordinate direction
+        float atten = 1.0f;
+        vec3 l = -lights[i].direction; // world coordinate direction, from surface poitn to light source
+        float unocclusion = 1.0f;
+
+        //point light
+        if(lights[i].direction.x == 0.0f && lights[i].direction.y == 0.0f && lights[i].direction.z == 0.0f) {
+            //light direction (point light!)
+            l = normalize(lights[i].position - interpolatedPos); // world coordinate direction
+            atten = 1.0f / ( lights[i].attenuationConstant + lights[i].attenuationLinear * dist + lights[i].attenuationQuadratic * dist*dist);
+        } else {//directional light:
+            //shadow map sample
+            unocclusion = GetUnocclusionFactor(interpolatedPos);
+        }
+
         //vec3 l = vec3(normalize(interpolatedPos -lights[i].position)); // world coordinate direction
         vec3 v = normalize(cameraWorldPos - interpolatedPos); //world coordinate direction
         vec3 n = normalize(interpolatedNormal);
@@ -122,9 +135,13 @@ void fullRenderPass() {
             vec3 s = (Ks * lights[i].specular);
             d *= NL;
             d *= atten;
+            d *= unocclusion;
             a *= atten;
+            a *= unocclusion;
             s *= pow(RLV,specularExponent);
             s *= atten;
+            s *= unocclusion;
+
             diffContr += vec4(d,1.0);
             ambContr += vec4(a,1.0);
             specContr += vec4(s,1.0);
@@ -135,15 +152,17 @@ void fullRenderPass() {
                 vec3 s = (Ks * lights[i].specular);
                 s *= pow(RLVRight,specularExponent);
                 s *= atten;
+                s *= unocclusion;
                 specContrRight += vec4(s,1.0);
             }
 
         }
     }
 
-    float unocclusion = GetUnocclusionFactor(interpolatedPos);
 
-    vec4 tColour = vec4(Ka,1.0) * textureColorDif +  unocclusion * (diffContr * textureColorDif + specContr * textureColorSpec);
+
+
+    vec4 tColour = vec4(Ka,1.0) * textureColorDif +  diffContr * textureColorDif + specContr * textureColorSpec;
 
     tColour.a = transparency;
     if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;

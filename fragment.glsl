@@ -141,9 +141,10 @@ void fullRenderPass() {
         }
     }
 
+    float unocclusion = GetUnocclusionFactor(interpolatedPos);
 
-    //vec4 tColour = specContr * textureColorSpec + ambContr * textureColorAmb +  diffContr * textureColorDif;
-    vec4 tColour = vec4(GetUnocclusionFactor(interpolatedPos));
+    vec4 tColour = vec4(Ka,1.0) * textureColorDif +  unocclusion * (diffContr * textureColorDif + specContr * textureColorSpec);
+
     tColour.a = transparency;
     if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
 

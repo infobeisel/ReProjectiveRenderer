@@ -2,7 +2,7 @@
 #include <QVector>
 #include <QImage>
 
-
+#define MATERIAL_KA aiColor3D(0.2f,0.2f,0.2f);
 
 Scene::Scene(QString fullPath)
 {
@@ -341,7 +341,8 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
             float opacity = 1.0f;
             aiMaterial* mat = s->mMaterials[mesh->mMaterialIndex];
 
-            mat->Get( AI_MATKEY_COLOR_AMBIENT, ka);
+            //mat->Get( AI_MATKEY_COLOR_AMBIENT, ka);
+            ka = MATERIAL_KA;
             mat->Get( AI_MATKEY_COLOR_DIFFUSE, kd);
             mat->Get( AI_MATKEY_COLOR_SPECULAR, ks);
             mat->Get( AI_MATKEY_SHININESS, shininess );

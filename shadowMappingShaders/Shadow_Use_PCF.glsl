@@ -27,7 +27,7 @@ const float SeedMultiplier = 9999;
 
 const float ShadowBias = 5e-4f;
 
-const int CountShadowSamples = 25;
+const int CountShadowSamples = 128;
 
 float GetUnocclusionFactor(vec3 worldPosition)
 {
@@ -50,7 +50,7 @@ float GetUnocclusionFactor(vec3 worldPosition)
         for (int i = 0; i < CountShadowSamples; ++i)
 	{
 
-                vec2 offset = Poisson25[i] * pcfRadius;
+                vec2 offset = Poisson128[i] * pcfRadius;
 		offset = RotateVec2(offset, rotationFrame);
                 float tmp = float(texture(ShadowMap, vec3(texCoord + offset, depth))); // texture with shadow maps returns float
 

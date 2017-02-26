@@ -101,6 +101,7 @@ void ShadowMapGenerator::draw(Scene* s) {
 
                 projection.setToIdentity();
                 projection.ortho(-mapResolution[0],mapResolution[0],-mapResolution[1],mapResolution[1],NearClippingPlane,FarClippingPlane);
+                //projection.ortho(-200,200,-200,200,NearClippingPlane,FarClippingPlane);
 
                 GL.glDrawBuffer(GL_COLOR_ATTACHMENT0);
                 s->draw(&shaderProgram,view,projection, OPAQUE);

@@ -36,7 +36,7 @@ void CameraTour::load()
     QVector3D cameraForward;
     QVector3D cameraUp;
     float timeStep = 1.0f / (float)(s->mNumCameras - 1);
-    if(s->HasCameras() && s->mNumCameras > 4) {
+    if(s->HasCameras() && s->mNumCameras >= 4) {
         for(int i = 0; i < s->mNumCameras; i++) {
             aiCamera* li = s->mCameras[i];
             aiNode* found = AssimpSceneSearch::find(QString(li->mName.data),s->mRootNode);

@@ -15,5 +15,8 @@ int main(int argc, char *argv[])
     modelWindow->setFormat(format);
     modelWindow->resize(1024,1024);
     modelWindow->show();
+
+
+
     return a.exec();
 }

@@ -25,7 +25,8 @@ SOURCES += main.cpp \
     reprojectionerrorrenderer.cpp \
     utils/CatmullRomSpline.cpp \
     utils/cameratour.cpp \
-    shadowmapgenerator.cpp
+    shadowmapgenerator.cpp \
+    utils/pixelcounter.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -60,7 +61,8 @@ HEADERS += \
     utils/cameratour.h \
     utils/assimpscenesearch.h \
     utils/csvfilehandle.h \
-    shadowmapgenerator.h
+    shadowmapgenerator.h \
+    utils/pixelcounter.h
 
 #added assimp as external library in the project directory...
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/assimp/lib/release/ -lassimp

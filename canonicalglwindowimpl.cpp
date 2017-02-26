@@ -67,11 +67,17 @@ void CanonicalGLWindowImpl::initializeGL() {
 
     //
     fpsLogger = CSVFileHandle<int>(1700);
+    cameraAnimationTimeLogger = CSVFileHandle<float>(1700);
+
+    pixelCounter = PixelCounter();
 
     time.start();
 
-
-
+    //register update event
+    QObject::connect(this,
+                     SIGNAL(frameSwapped()),
+                     this,
+                     SLOT(update()));
 }
 
 void CanonicalGLWindowImpl::resizeGL(int w, int h) {
@@ -85,12 +91,6 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
 }
 
 void CanonicalGLWindowImpl::paintGL() {
-
-
-
-
-
-
 
 
 
@@ -119,7 +119,9 @@ void CanonicalGLWindowImpl::paintGL() {
             nView.lookAt(cameraPosition,cameraPosition + cross,up);
         } else {
             camTour->setValid(false); //end animation
-            fpsLogger.flush("asdasdasd");
+            fpsLogger.flush("fpslog");
+            cameraAnimationTimeLogger.flush("frametimelog");
+
         }
     }
 
@@ -129,13 +131,18 @@ void CanonicalGLWindowImpl::paintGL() {
 
 
     renderer->setViewMatrix(nView);
+
     timer = QElapsedTimer();
     timer.start();
+
     renderer->draw(scene);
 
-    if(camTour->isValid()) fpsLogger.addValue((int)(1000.0f / (float)timer.elapsed()));
+    if(camTour->isValid()) {
+        fpsLogger.addValue((int)(1000.0f / ( (float)timer.elapsed() + 0.0001f)));
+        cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
+    }
 
-    int msToWait = LOCK_FPS_MS - timer.elapsed();
+    int msToWait = (LOCK_FPS_MS - timer.elapsed()) < 0 ? 0 :(LOCK_FPS_MS - timer.elapsed())  ;
     #ifdef Q_OS_WIN
         Sleep(uint(msToWait));
     #else
@@ -144,9 +151,11 @@ void CanonicalGLWindowImpl::paintGL() {
     #endif
 
     //trigger an update so that this function gets called the next frame again
-    QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
+    //QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
 
     //qDebug() << (1000.0f / (float)timer.elapsed());
+        //register update
+
 
 
 }

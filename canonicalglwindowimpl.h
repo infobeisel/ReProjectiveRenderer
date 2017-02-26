@@ -11,6 +11,7 @@
 #include "utils/cameratour.h"
 #include <QTime>
 #include "utils/csvfilehandle.h"
+#include "utils/pixelcounter.h"
 #include "shadowmapgenerator.h"
 #define CameraTourDurationInSeconds 20.0f
 #define NearClippingPlane 0.3f
@@ -51,6 +52,8 @@ private:
     QElapsedTimer timer;
     QTime time;
     CSVFileHandle<int> fpsLogger;
+    CSVFileHandle<float> cameraAnimationTimeLogger;
+    PixelCounter pixelCounter;
     bool shiftKeyHeld;
     bool spaceKeyHeld;
 

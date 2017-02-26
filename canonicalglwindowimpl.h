@@ -14,6 +14,7 @@
 #include "utils/pixelcounter.h"
 #include "shadowmapgenerator.h"
 #define CameraTourDurationInSeconds 20.0f
+#define CameraTourStartOffsetInSeconds 2.0f
 #define NearClippingPlane 0.3f
 class CanonicalGLWindowImpl : public QOpenGLWindow
 {
@@ -39,16 +40,13 @@ private:
     QVector3D moveDir; //Vector that shows into the world coordinate direction (depending to wasd keys), where to move the camera
     QVector<int> lastCursorPos;//member to calculate the mouse movement since last frame
     QVector<float> viewAngles; //x-axis and y-axis angles in degrees
-    //camera move animation
-    CameraTour* camTour;
-
 
     //the scene to be rendered
     Scene* scene;
-
     ShadowMapGenerator shadows;
 
-
+    //profiling
+    CameraTour* camTour;//camera move animation
     QElapsedTimer timer;
     QTime time;
     CSVFileHandle<int> fpsLogger;
@@ -57,6 +55,9 @@ private:
     PixelCounter pixelCounter;
     bool shiftKeyHeld;
     bool spaceKeyHeld;
+    bool rerenderNonReprojectedPixels;
+    bool pixelCountersEnabled; //should pixels be counted?
+
 
     void handleCursor(QMatrix4x4* affect);//translates cursor movement into view matrix updates
 };

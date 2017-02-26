@@ -12,8 +12,11 @@ void ReprojectiveStereoscopicRenderer::setNormalizedEyeSeparation(float e) {
 float ReprojectiveStereoscopicRenderer::getNormalizedEyeSeparation() {
     return normalizedEyeSeparation;
 }
-GLuint ReprojectiveStereoscopicRenderer::getReprojectedImage() {
+GLuint ReprojectiveStereoscopicRenderer::getRightImage() {
     return renderbuffers[Right][Color];
+}
+GLuint ReprojectiveStereoscopicRenderer::getLeftImage() {
+    return renderbuffers[Left][Color];
 }
 
 void ReprojectiveStereoscopicRenderer::toggleDebugMode() {

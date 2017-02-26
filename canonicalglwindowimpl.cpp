@@ -24,10 +24,14 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new CanonicalStereoscopicRenderer();
     timer.start();
     GL.glClear(0);
-    renderer = new ReprojectiveStereoscopicRenderer();
+    //renderer = new ReprojectiveStereoscopicRenderer();
     //renderer = new CanonicalMonoscopicRenderer();
-    //renderer = new CanonicalStereoscopicRenderer();
+    renderer = new CanonicalStereoscopicRenderer();
+    //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
+
+    rerenderNonReprojectedPixels = false; //
+    pixelCountersEnabled = false;
 
     //load models
     std::ifstream in("scenelocation");
@@ -45,7 +49,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     //shadows
     shadows.initialize(2048,2048);
     shadows.draw(scene);
-    shadows.saveToImage("test.png");
+    //  shadows.saveToImage("test.png");
 
 
     qDebug() << paths.at(0) << "  " << paths.at(1) << "  "<< paths.at(2) << "  "<< paths.at(3) ;
@@ -102,10 +106,9 @@ void CanonicalGLWindowImpl::paintGL() {
     handleCursor(&nView);
 
     //animated movement
+    float t =  (( time.elapsed() / 1000.0f) - CameraTourStartOffsetInSeconds) / CameraTourDurationInSeconds;
     if(camTour->isValid()) {
-        float t =  ( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds;
-        //t /= CameraTourDurationInSeconds;
-        if(t < 1.0f) { //camera animation has not ended yet
+        if(t > 0.0f && t < 1.0f) { //camera animation has not ended yet
             QVector3D position;
             QVector3D dir;
             QVector3D up;
@@ -117,12 +120,12 @@ void CanonicalGLWindowImpl::paintGL() {
             renderer->setCameraOrientation(cameraOrientation);
             nView.setToIdentity();
             nView.lookAt(cameraPosition,cameraPosition + cross,up);
-        } else {
+        } else if(t > 1.0f){
             camTour->setValid(false); //end animation
             fpsLogger.flush("fpslog");
             cameraAnimationTimeLogger.flush("frametimelog");
             pixelCountLogger.flush("reprojectedPixelCountlog");
-
+            //pixelCounter.saveReadImage("image");
 
 
         }
@@ -140,13 +143,24 @@ void CanonicalGLWindowImpl::paintGL() {
 
     renderer->draw(scene);
 
-    if(camTour->isValid()) {
+    if(camTour->isValid() && t > 0.0f && t < 1.0f) {
         fpsLogger.addValue((int)(1000.0f / ( (float)timer.elapsed() + 0.0001f)));
         cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
-        //count reprojected pixels
-        GLuint reprojectedImage = ((ReprojectiveStereoscopicRenderer*)renderer)->getReprojectedImage();
-        pixelCounter.readFromGLTexture(reprojectedImage);
-        pixelCountLogger.addValue(pixelCounter.countPixelsWithColorFraction(QColor(0.0,255,0.0,255)));
+
+        if(pixelCountersEnabled) {
+            //count reprojected pixels
+            GLuint reprojectedImage = ((ReprojectiveStereoscopicRenderer*)renderer)->getRightImage();
+            pixelCounter.readFromGLTexture(reprojectedImage);
+            if(rerenderNonReprojectedPixels) { //if they are rerendered measure the reprojection errror,
+                GLuint leftImage = ((ReprojectiveStereoscopicRenderer*)renderer)->getLeftImage();
+                pixelCounter.subtractGLTexture(leftImage);
+                float error = 1.0f - pixelCounter.countPixelsWithColorFraction(QColor(0,0,0,0));
+                pixelCountLogger.addValue(error);
+            } else { //count pixels which would be rerendered
+                pixelCountLogger.addValue(pixelCounter.countPixelsWithColorFraction(QColor(0,255,0,255)));
+            }
+
+        }
     }
 
     int msToWait = (LOCK_FPS_MS - timer.elapsed()) < 0 ? 0 :(LOCK_FPS_MS - timer.elapsed())  ;
@@ -261,6 +275,10 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         break;
         case Qt::Key_F1:
         renderer->toggleDebugMode();
+        rerenderNonReprojectedPixels = !rerenderNonReprojectedPixels;
+        break;
+        case Qt::Key_F2:
+        pixelCountersEnabled = !pixelCountersEnabled;
         break;
         default:
         break;

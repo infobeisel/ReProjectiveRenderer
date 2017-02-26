@@ -17,7 +17,8 @@ public:
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
     void toggleDebugMode() override;
-    GLuint getReprojectedImage();
+    GLuint getRightImage();
+    GLuint getLeftImage();
 protected:
     enum {Color, Exchange, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};

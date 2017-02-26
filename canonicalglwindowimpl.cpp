@@ -25,8 +25,8 @@ void CanonicalGLWindowImpl::initializeGL() {
     timer.start();
     GL.glClear(0);
     //renderer = new ReprojectiveStereoscopicRenderer();
-    //renderer = new CanonicalMonoscopicRenderer();
-    renderer = new CanonicalStereoscopicRenderer();
+    renderer = new CanonicalMonoscopicRenderer();
+    //renderer = new CanonicalStereoscopicRenderer();
     //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 
@@ -70,9 +70,9 @@ void CanonicalGLWindowImpl::initializeGL() {
     moveDir= QVector3D(0.0f,0.0f,0.0f);
 
     //
-    fpsLogger = CSVFileHandle<int>(1700);
-    cameraAnimationTimeLogger = CSVFileHandle<float>(1700);
-    pixelCountLogger = CSVFileHandle<float>(1700);
+    fpsLogger = CSVFileHandle<int>(3000);
+    cameraAnimationTimeLogger = CSVFileHandle<float>(3000);
+    pixelCountLogger = CSVFileHandle<float>(3000);
     pixelCounter = PixelCounter();
 
     time.start();

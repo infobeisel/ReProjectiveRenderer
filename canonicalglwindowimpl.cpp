@@ -138,8 +138,7 @@ void CanonicalGLWindowImpl::paintGL() {
 
     renderer->setViewMatrix(nView);
 
-    timer = QElapsedTimer();
-    timer.start();
+
 
     renderer->draw(scene);
 
@@ -163,13 +162,16 @@ void CanonicalGLWindowImpl::paintGL() {
         }
     }
 
-    int msToWait = (LOCK_FPS_MS - timer.elapsed()) < 0 ? 0 :(LOCK_FPS_MS - timer.elapsed())  ;
+    /*int msToWait = (LOCK_FPS_MS - timer.elapsed()) < 0 ? 0 :(LOCK_FPS_MS - timer.elapsed())  ;
     #ifdef Q_OS_WIN
         Sleep(uint(msToWait));
     #else
         struct timespec ts = { msToWait / 1000, (msToWait % 1000) * 1000 * 1000 };
         nanosleep(&ts, NULL);
-    #endif
+    #endif*/
+
+    timer = QElapsedTimer();
+    timer.start();
 
     //trigger an update so that this function gets called the next frame again
     //QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));

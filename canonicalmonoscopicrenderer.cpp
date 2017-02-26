@@ -22,6 +22,12 @@ void CanonicalMonoscopicRenderer::draw(Scene* s) {
 
     shaderProgram.setUniformValue( "P", projection );
 
+    QVector3D forward = cameraOrientation.rotatedVector (QVector3D(0.0,0.0,-1.0));
+    QVector3D up = cameraOrientation.rotatedVector (QVector3D(0.0,1.0,0.0));
+
+    view.setToIdentity();
+    view.lookAt(cameraPosition,cameraPosition + forward,up);
+
     //first draw opaque, then transparent
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue( "V", view );

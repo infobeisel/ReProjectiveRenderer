@@ -370,8 +370,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
                 withProgram->setUniformValue("Kd",QVector3D(kd.r,kd.g,kd.b));
                 withProgram->setUniformValue("Ks",QVector3D(ks.r,ks.g,ks.b));
                 withProgram->setUniformValue("specularExponent",shininess);
-                withProgram->setUniformValue("transparency",transparency);
-
+                withProgram->setUniformValue("transparency",transparency);              
                 //set texture parameters
                 aiString tpath;
                 if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
@@ -393,8 +392,6 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
                     textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
                 } else
                     textureManager->bindLoadedTexture(QString(tpath.data),&"bumpSampler"[0],&"bumpTextureArrayIndex"[0],withProgram);
-
-
 
                 GL.glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_INT,(const void*)(indexOffsetCounter * sizeof(unsigned int)) );
 

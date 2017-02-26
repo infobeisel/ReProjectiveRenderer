@@ -12,6 +12,9 @@ void ReprojectiveStereoscopicRenderer::setNormalizedEyeSeparation(float e) {
 float ReprojectiveStereoscopicRenderer::getNormalizedEyeSeparation() {
     return normalizedEyeSeparation;
 }
+GLuint ReprojectiveStereoscopicRenderer::getReprojectedImage() {
+    return renderbuffers[Right][Color];
+}
 
 void ReprojectiveStereoscopicRenderer::toggleDebugMode() {
     GLint l = GL.glGetUniformLocation( 	shaderProgram.programId(),"debugMode");
@@ -136,6 +139,9 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
     GL.glBlitFramebuffer(0,0  ,w,h/2,
                          0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
+
+
 }
 
 void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
@@ -151,6 +157,7 @@ void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     //qDebug() << "color: " << GL.glGetFragDataLocation(shaderProgram.programId(), "color");
     //qDebug() << "exchangeBuffer: " << GL.glGetFragDataLocation(shaderProgram.programId(), "exchangeBuffer");
     GL.glBindFramebuffer(GL_FRAMEBUFFER,0);
+
 }
 void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h) {
     GL.glGenTextures(NumRenderbuffers,renderbuffers[fboIndex]);

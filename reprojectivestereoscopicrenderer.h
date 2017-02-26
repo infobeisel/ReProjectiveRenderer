@@ -4,7 +4,7 @@
 
 #include "canonicalmonoscopicrenderer.h"
 #include <QElapsedTimer>
-
+#include "utils/pixelcounter.h"
 
 class ReprojectiveStereoscopicRenderer : public CanonicalMonoscopicRenderer
 {
@@ -17,6 +17,7 @@ public:
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
     void toggleDebugMode() override;
+    GLuint getReprojectedImage();
 protected:
     enum {Color, Exchange, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};

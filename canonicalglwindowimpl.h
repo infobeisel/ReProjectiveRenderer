@@ -53,6 +53,7 @@ private:
     QTime time;
     CSVFileHandle<int> fpsLogger;
     CSVFileHandle<float> cameraAnimationTimeLogger;
+    CSVFileHandle<float> pixelCountLogger;
     PixelCounter pixelCounter;
     bool shiftKeyHeld;
     bool spaceKeyHeld;

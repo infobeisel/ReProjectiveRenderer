@@ -233,7 +233,7 @@ void main() {
                 if        (outsideViewFrustum) { // pink for unavailable pixels
                     color = vec4(1.0,0.0,0.8,1.0);
                 } else if (d  > depthThreshold) { //green for fragments that don't pass the depth comparison test
-                    color = vec4(0.0,(d - depthThreshold)/ depthThreshold,0.0,1.0); //d-t/t =
+                    color = vec4(0.0,1.0,0.0,1.0); //d-t/t =
                 } else if ((isSpecular.x && specError > 0.001f)) { // if specular,blue
                     color = vec4(0.0,0.0,1.0,1.0);
                 } else if ((lodError > 0.5f)) {// undersampled areas : yellow

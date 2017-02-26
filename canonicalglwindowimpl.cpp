@@ -68,7 +68,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     //
     fpsLogger = CSVFileHandle<int>(1700);
     cameraAnimationTimeLogger = CSVFileHandle<float>(1700);
-
+    pixelCountLogger = CSVFileHandle<float>(1700);
     pixelCounter = PixelCounter();
 
     time.start();
@@ -121,6 +121,9 @@ void CanonicalGLWindowImpl::paintGL() {
             camTour->setValid(false); //end animation
             fpsLogger.flush("fpslog");
             cameraAnimationTimeLogger.flush("frametimelog");
+            pixelCountLogger.flush("reprojectedPixelCountlog");
+
+
 
         }
     }
@@ -140,6 +143,10 @@ void CanonicalGLWindowImpl::paintGL() {
     if(camTour->isValid()) {
         fpsLogger.addValue((int)(1000.0f / ( (float)timer.elapsed() + 0.0001f)));
         cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
+        //count reprojected pixels
+        GLuint reprojectedImage = ((ReprojectiveStereoscopicRenderer*)renderer)->getReprojectedImage();
+        pixelCounter.readFromGLTexture(reprojectedImage);
+        pixelCountLogger.addValue(pixelCounter.countPixelsWithColorFraction(QColor(0.0,255,0.0,255)));
     }
 
     int msToWait = (LOCK_FPS_MS - timer.elapsed()) < 0 ? 0 :(LOCK_FPS_MS - timer.elapsed())  ;

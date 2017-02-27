@@ -269,9 +269,8 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
 }
 
 void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix, materialClassifier materialTypes){
+
     vertexArrayObject.bind();
-
-
 
     //tell the shader how many light sources there are
     withProgram->setUniformValue( "lightCount", s->mNumLights );

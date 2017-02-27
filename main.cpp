@@ -4,12 +4,14 @@
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication a(argc, argv);
     QSurfaceFormat format;
     format.setVersion(4,1); //core version 410
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setSamples( 4 );
     format.setDepthBufferSize( 24 );
+    format.setSwapInterval(0);
+    QSurfaceFormat::setDefaultFormat(format);
+    QGuiApplication a(argc, argv);
     CanonicalGLWindowImpl *modelWindow = 0;
     modelWindow = new CanonicalGLWindowImpl();
     modelWindow->setFormat(format);

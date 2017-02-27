@@ -49,6 +49,7 @@ private:
     CameraTour* camTour;//camera move animation
     QElapsedTimer timer;
     QTime time;
+    QTime guiUpdateTime;
     CSVFileHandle<int> fpsLogger;
     CSVFileHandle<float> cameraAnimationTimeLogger;
     CSVFileHandle<float> pixelCountLogger;

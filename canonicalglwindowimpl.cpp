@@ -7,6 +7,7 @@
 #include "scene.h"
 #include <QCoreApplication>
 #include <fstream>
+#include <sstream>
 
 #define LOCK_FPS_MS 11
 
@@ -76,6 +77,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     pixelCounter = PixelCounter();
 
     time.start();
+    guiUpdateTime.start();
 
     //register update event
     QObject::connect(this,
@@ -139,8 +141,17 @@ void CanonicalGLWindowImpl::paintGL() {
     renderer->draw(scene);
 
     if(camTour->isValid() && t > 0.0f && t < 1.0f) {
-        fpsLogger.addValue((int)(1000.0f / ( (float)timer.elapsed() + 0.0001f)));
+
+        auto fps = (int)(1000.0f / ( (float)timer.elapsed() + 0.0001f));
+        fpsLogger.addValue(fps);
         cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
+        if(    guiUpdateTime.elapsed() > 1000) {
+            std::stringstream ss;
+            ss << "FPS: " << fps;
+            setTitle(ss.str().c_str());
+            guiUpdateTime.start();
+
+        }
 
         if(pixelCountersEnabled) {
             //count reprojected pixels

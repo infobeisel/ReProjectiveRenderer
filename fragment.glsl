@@ -190,8 +190,8 @@ void fullRenderPass() {
 
 
 
-void main() {
-
+void main()
+{
    if(transparency == 0.0 && eyeIndex == 1) { //transparent objects get always rerendered
         //perform reprojection
         //right camera space position + translation resulting from eye separation = left camera space position

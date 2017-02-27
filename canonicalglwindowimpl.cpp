@@ -26,8 +26,8 @@ void CanonicalGLWindowImpl::initializeGL() {
     timer.start();
     GL.glClear(0);
     //renderer = new ReprojectiveStereoscopicRenderer();
-    renderer = new CanonicalMonoscopicRenderer();
-    //renderer = new CanonicalStereoscopicRenderer();
+    //renderer = new CanonicalMonoscopicRenderer();
+    renderer = new CanonicalStereoscopicRenderer();
     //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 
@@ -80,10 +80,10 @@ void CanonicalGLWindowImpl::initializeGL() {
     guiUpdateTime.start();
 
     //register update event
-    QObject::connect(this,
-                     SIGNAL(frameSwapped()),
-                     this,
-                     SLOT(update()));
+    //QObject::connect(this,
+    //                 SIGNAL(frameSwapped()),
+    //                 this,
+    //                 SLOT(update()));
 }
 
 void CanonicalGLWindowImpl::resizeGL(int w, int h) {
@@ -181,7 +181,7 @@ void CanonicalGLWindowImpl::paintGL() {
     timer.start();
 
     //trigger an update so that this function gets called the next frame again
-    //QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
+   QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
 
     //qDebug() << (1000.0f / (float)timer.elapsed());
         //register update

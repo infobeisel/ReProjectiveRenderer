@@ -49,7 +49,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     //shadows
     shadows.initialize(2048,2048);
     shadows.draw(scene);
-    //  shadows.saveToImage("test.png");
+     shadows.saveToImage("test.png");
 
 
     qDebug() << paths.at(0) << "  " << paths.at(1) << "  "<< paths.at(2) << "  "<< paths.at(3) ;
@@ -114,20 +114,17 @@ void CanonicalGLWindowImpl::paintGL() {
             QVector3D up;
             camTour->getPositionForwardUp(t,position,dir,up);
             cameraPosition = position;
-            QVector3D cross = QVector3D::crossProduct(up,dir);
-            cameraOrientation = QQuaternion::fromDirection(cross.normalized(), up.normalized());
+            //QVector3D cross = QVector3D::crossProduct(up,dir);
+            //cameraOrientation = QQuaternion::fromDirection(cross.normalized(), up.normalized());
+            cameraOrientation = QQuaternion::fromDirection(dir.normalized(), up.normalized());
             renderer->setCameraPosition(cameraPosition);
             renderer->setCameraOrientation(cameraOrientation);
-            nView.setToIdentity();
-            nView.lookAt(cameraPosition,cameraPosition + cross,up);
         } else if(t > 1.0f){
             camTour->setValid(false); //end animation
             fpsLogger.flush("fpslog");
             cameraAnimationTimeLogger.flush("frametimelog");
             pixelCountLogger.flush("reprojectedPixelCountlog");
             //pixelCounter.saveReadImage("image");
-
-
         }
     }
 
@@ -136,7 +133,6 @@ void CanonicalGLWindowImpl::paintGL() {
     shadows.setShadowMapVariables(renderer->getShaderProgram());
 
 
-    renderer->setViewMatrix(nView);
 
 
 

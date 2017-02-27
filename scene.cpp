@@ -71,7 +71,7 @@ void Scene::load(QOpenGLShaderProgram *toProgram) {
         if(s->HasLights()) {
             if(lightSourceNameToLightArrayIndex.find(QString(node->mName.data)) != lightSourceNameToLightArrayIndex.end()) {
                 QMatrix4x4 modelMatrix =  QMatrix4x4(node->mTransformation[0]);
-                QVector3D dir = modelMatrix.map(QVector3D(0.0f,0.0f,1.0f));
+                QVector3D dir = modelMatrix.mapVector(QVector3D(0.0f,0.0f,1.0f));
                 //qDebug() << QString(node->mName.data) << QVector4D(node->mTransformation.a4,node->mTransformation.b4,node->mTransformation.c4,node->mTransformation.d4);
                 int lightSourceIndex = lightSourceNameToLightArrayIndex[QString(node->mName.data)];
                 aiLight* li = s->mLights[lightSourceIndex];

@@ -96,7 +96,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Color]);
     shaderProgram.setUniformValue("leftImageSampler" , 1);
 
-    GL.glClampColor(GL_CLAMP_READ_COLOR,GL_FALSE); //avoid clamping
+    //GL.glClampColor(GL_CLAMP_READ_COLOR,GL_FALSE); //avoid clamping
 
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
@@ -176,7 +176,7 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL.glTexImage2D(GL_TEXTURE_2D,0,     GL_R16F     ,w,h,0,     GL_RED    ,  GL_FLOAT,NULL);
+    GL.glTexImage2D(GL_TEXTURE_2D,0,     GL_R32F     ,w,h,0,     GL_RED    ,  GL_FLOAT,NULL);
 
 
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Depth]);

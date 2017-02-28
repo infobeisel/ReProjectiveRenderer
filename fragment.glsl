@@ -179,7 +179,7 @@ void fullRenderPass() {
         isSpecular.x = (isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false);
         vec3 tSpecError = specContr.rgb - specContrRight.rgb;
         float specError = abs(tSpecError.r)+abs(tSpecError.g)+abs(tSpecError.b);
-        if((isSpecular.x && specError > 0.001f))
+        if((isSpecular.x && specError > 0.003f))
             depth = -1.0; //encoding as negative depth value
         exchangeBuffer = depth;
     }
@@ -209,8 +209,6 @@ void main()
         float rightEyeCameraSpaceDepth = - cameraSpacePos.z / FarClippingPlane ;
         float d = abs( abs(leftEyeCameraSpaceDepth) - rightEyeCameraSpaceDepth); //normalized difference. leftEyeCameraSpaceDepth could be negative, absolute
 
-
-
         //calculate if outside the view frustum
         bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
@@ -225,7 +223,7 @@ void main()
         if(dontReproject) {
             if(debugMode == 1) fullRenderPass();
             else {
-                if        (outsideViewFrustum) { // pink for unavailable pixels
+               /*if        (outsideViewFrustum) { // pink for unavailable pixels
                     color = vec4(1.0,0.0,0.8,1.0);
                 } else if (leftEyeCameraSpaceDepth < 0.0) { // if specular,blue
                     color = vec4(0.0,0.0,1.0,1.0);
@@ -233,7 +231,8 @@ void main()
                     color = vec4(0.0,1.0,0.0,1.0); //d-t/t =
                 } else if ((lodError <  0.00025f)) {// undersampled areas : yellow
                     color = vec4(1.0,1.0,0.0,1.0);
-                }
+                }*/
+                color = vec4(0.0,1.0,0.0,1.0);
             }
         } else {
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment

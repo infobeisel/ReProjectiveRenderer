@@ -140,18 +140,13 @@ void CanonicalGLWindowImpl::paintGL() {
 
     renderer->draw(scene);
 
+    auto fps = (int)(1000.0f / ( (float)timer.elapsed() + 0.0001f));
     if(camTour->isValid() && t > 0.0f && t < 1.0f) {
 
-        auto fps = (int)(1000.0f / ( (float)timer.elapsed() + 0.0001f));
+
         fpsLogger.addValue(fps);
         cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
-        if(    guiUpdateTime.elapsed() > 1000) {
-            std::stringstream ss;
-            ss << "FPS: " << fps;
-            setTitle(ss.str().c_str());
-            guiUpdateTime.start();
 
-        }
 
         if(pixelCountersEnabled) {
             //count reprojected pixels
@@ -167,6 +162,14 @@ void CanonicalGLWindowImpl::paintGL() {
             }
 
         }
+    }
+
+    if(    guiUpdateTime.elapsed() > 1000) {
+        std::stringstream ss;
+        ss << "FPS: " << fps;
+        setTitle(ss.str().c_str());
+        guiUpdateTime.start();
+
     }
 
     /*int msToWait = (LOCK_FPS_MS - timer.elapsed()) < 0 ? 0 :(LOCK_FPS_MS - timer.elapsed())  ;

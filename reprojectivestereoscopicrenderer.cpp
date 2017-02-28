@@ -95,6 +95,10 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glActiveTexture(GL_TEXTURE1);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Color]);
     shaderProgram.setUniformValue("leftImageSampler" , 1);
+    //bind left image depth buffer
+    GL.glActiveTexture(GL_TEXTURE2);
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Depth]);
+    shaderProgram.setUniformValue("exchangeBuffer2Sampler" , 2);
 
     //GL.glClampColor(GL_CLAMP_READ_COLOR,GL_FALSE); //avoid clamping
 

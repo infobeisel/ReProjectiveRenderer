@@ -4,7 +4,6 @@
 float GetUnocclusionFactor(vec3 worldPosition);
 
 
-
 const float NearClippingPlane = 0.3f;
 const float FarClippingPlane = 10000.0f;
 const float MY_GL_TEXTURE_MAX_LOD = 1000.0f;
@@ -205,9 +204,18 @@ void main()
         vec4 exchangeBufferData = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
 
         //calculate depth difference
-        float leftEyeCameraSpaceDepth = exchangeBufferData.r;
-        float rightEyeCameraSpaceDepth = - cameraSpacePos.z / FarClippingPlane ;
-        float d = abs( abs(leftEyeCameraSpaceDepth) - rightEyeCameraSpaceDepth); //normalized difference. leftEyeCameraSpaceDepth could be negative, absolute
+        float leftEyeCameraSpaceDepth = texture(exchangeBuffer2Sampler, vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))).r;
+        //linearize depth values
+        float p12 = P[2][3];
+        float p11 = - P[2][2];
+        leftEyeCameraSpaceDepth         = - (p12 / ( leftEyeCameraSpaceDepth - p11));
+        float rightEyeCameraSpaceDepth  = - (p12 / ( gl_FragCoord.z - p11));
+        //normalize
+        leftEyeCameraSpaceDepth /= -FarClippingPlane;
+        rightEyeCameraSpaceDepth /= -FarClippingPlane;
+
+
+        float d = abs( leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference. leftEyeCameraSpaceDepth could be negative, absolute
 
         //calculate if outside the view frustum
         bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
@@ -237,7 +245,6 @@ void main()
         } else {
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
         }
-
 
     } else {
         fullRenderPass();

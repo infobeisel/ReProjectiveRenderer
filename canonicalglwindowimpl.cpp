@@ -91,6 +91,7 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     QMatrix4x4 nProj = QMatrix4x4();
     nProj.setToIdentity();
     nProj.perspective(FOV, (float)w/h, NearClippingPlane, FarClippingPlane);
+
     //nProj.ortho(-(float)w/2.0f,(float)w/2.0f,-(float)h/2.0f,(float)h/2.0f,NearClippingPlane,FarClippingPlane);
     renderer->setProjectionMatrix(nProj);
     renderer->initialize(w,h);

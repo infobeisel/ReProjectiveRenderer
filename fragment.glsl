@@ -165,7 +165,7 @@ void fullRenderPass() {
     vec4 tColour = vec4(Ka,1.0) * textureColorDif +  diffContr * textureColorDif + specContr * textureColorSpec;
 
     tColour.a = transparency;
-    if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
+    //if(textureColorSpec.a < 0.5f && textureColorAmb.a < 0.5f && textureColorDif.a < 0.5f ) discard;
 
     //store color
     color = tColour;
@@ -174,14 +174,11 @@ void fullRenderPass() {
     //store depth data
     if(eyeIndex == 0) {
         float depth = - cameraSpacePos.z / FarClippingPlane ; // z is in negative in opengl camera space. division by far plane to get normalized value
-
-        vec2 lod = textureQueryLod(diffuseSampler,vec2(interpolatedUV.x  ,interpolatedUV.y));
-
         //calculate specular contribution for right eye in left eye pass, write error in exchange buffer
         vec3 tSpecError = specContr.rgb - specContrRight.rgb;
         float specError = abs(tSpecError.r)+abs(tSpecError.g)+abs(tSpecError.b);
 
-        exchangeBuffer = vec4(0.0,lod.y,specError,depth);
+        exchangeBuffer = vec4(0.0,0.0,specError,depth);
     }
 }
 
@@ -219,14 +216,14 @@ void main()
         bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
         //calculate over/undersampling error
-        float lodReprojected = exchangeBufferData.g;
-        vec2 lod = textureQueryLod(diffuseSampler,vec2(interpolatedUV.x  ,interpolatedUV.y));
-        float lodError = abs(lodReprojected - lod.y);
+        float lodError = max(dFdx(uvSpaceLeftImageXCoord),dFdy(uvSpaceLeftImageXCoord));
 
-        if(outsideViewFrustum
-         || d  > depthThreshold
-         || (isSpecular.x && specError > 0.001f)
-         || (lodError > 0.5f)                  ) {
+
+        bool dontReproject =  (outsideViewFrustum
+                          || d  > depthThreshold
+                          || (isSpecular.x && specError > 0.001f)
+                          || (lodError < 0.00025f)                  );
+        if(dontReproject) {
 
             if(debugMode == 1) fullRenderPass();
             else {
@@ -236,7 +233,7 @@ void main()
                     color = vec4(0.0,1.0,0.0,1.0); //d-t/t =
                 } else if ((isSpecular.x && specError > 0.001f)) { // if specular,blue
                     color = vec4(0.0,0.0,1.0,1.0);
-                } else if ((lodError > 0.5f)) {// undersampled areas : yellow
+                } else if ((lodError <  0.00025f)) {// undersampled areas : yellow
                     color = vec4(1.0,1.0,0.0,1.0);
                 }
             }
@@ -244,10 +241,13 @@ void main()
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
         }
 
+
     } else {
         fullRenderPass();
 
     }
+
+
 
 }
 

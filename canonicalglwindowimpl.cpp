@@ -25,9 +25,9 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new CanonicalStereoscopicRenderer();
     timer.start();
     GL.glClear(0);
-    //renderer = new ReprojectiveStereoscopicRenderer();
+    renderer = new ReprojectiveStereoscopicRenderer();
     //renderer = new CanonicalMonoscopicRenderer();
-    renderer = new CanonicalStereoscopicRenderer();
+    //renderer = new CanonicalStereoscopicRenderer();
     //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 
@@ -164,7 +164,7 @@ void CanonicalGLWindowImpl::paintGL() {
         }
     }
 
-    if(    guiUpdateTime.elapsed() > 1000) {
+    if(    guiUpdateTime.elapsed() > 200) {
         std::stringstream ss;
         ss << "FPS: " << fps;
         setTitle(ss.str().c_str());

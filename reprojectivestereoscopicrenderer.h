@@ -5,7 +5,7 @@
 #include "canonicalmonoscopicrenderer.h"
 #include <QElapsedTimer>
 #include "utils/pixelcounter.h"
-
+#include <QOpenGLShader>
 class ReprojectiveStereoscopicRenderer : public CanonicalMonoscopicRenderer
 {
 public:
@@ -30,6 +30,14 @@ protected:
     void initializeFBO(int fboIndex, int w, int h);
     GLuint fbos[NumFBOs];
     GLuint renderbuffers[NumFBOs][NumRenderbuffers];
+
+    //shader which does normal light calculation
+    QOpenGLShaderProgram fullRenderShaderOnly;
+    //additionally writes necessary values to exchange buffer for later reprojection
+    QOpenGLShaderProgram fullRenderShaderWithExchangeBuffer;
+    //performs reprojection and reads from provided color and depth buffer
+    QOpenGLShaderProgram reprojectionShader;
+
 
     float normalizedEyeSeparation;
 

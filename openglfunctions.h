@@ -13,7 +13,7 @@ public:
 
     void CheckGLError(std::string tClassName)
     {
-        auto errorCode = glGetError();
+        auto errorCode = this->glGetError();
 
         if (errorCode != GL_NO_ERROR)
         {

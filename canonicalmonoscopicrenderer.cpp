@@ -40,26 +40,11 @@ void CanonicalMonoscopicRenderer::initialize(int w, int h) {
 }
 
 void CanonicalMonoscopicRenderer::initialize() {
-
-    GL.glUseProgram(0);
-    zPrepassShaderProgram.removeAllShaders();
-    QString vertexShaderPath = ":/simpleVert.glsl";
-    //compile shaders
-    if ( !zPrepassShaderProgram.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath.toUtf8() ) ) {
-        qDebug() << "ERROR (vertex shader):" << zPrepassShaderProgram.log();
-    }
-
-    if ( !zPrepassShaderProgram.link() ) {
-        qDebug() << "ERROR linking shader program:" << zPrepassShaderProgram.log();
-    }
-    zPrepassShaderProgram.bind();
-
-
     GL.glUseProgram(0);
     shaderProgram.removeAllShaders();
 
 
-    vertexShaderPath = ":/vertex.glsl";
+    QString vertexShaderPath = ":/vertex.glsl";
 
     //compile vertex shader
     if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath.toUtf8() ) ) {

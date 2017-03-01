@@ -118,9 +118,9 @@ void ShadowMapGenerator::draw(Scene* s) {
 }
 void ShadowMapGenerator::setShadowMapVariables(QOpenGLShaderProgram* toShader) {
     //make shadow map accessble in shader
-    GL.glActiveTexture(GL_TEXTURE2);
+    GL.glActiveTexture(GL_TEXTURE3);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Depth]);
-    toShader->setUniformValue("ShadowMap" , 2);
+    toShader->setUniformValue("ShadowMap" , 3);
     toShader->setUniformValue("ShadowCameraPosition",cameraPosition);
     QMatrix4x4 viewProj = projection * view;
     toShader->setUniformValue("ShadowCameraViewProjectionMatrix",viewProj);

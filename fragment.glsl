@@ -4,7 +4,7 @@
 float GetUnocclusionFactor(vec3 worldPosition);
 
 const float NearClippingPlane = 0.3f;
-const float FarClippingPlane = 10000.0f;
+const float FarClippingPlane = 1000.0f;
 const float MY_GL_TEXTURE_MAX_LOD = 1000.0f;
 layout(location = 0 ) out vec4 color;
 //layout(location = 1 ) out vec4 exchangeBuffer;

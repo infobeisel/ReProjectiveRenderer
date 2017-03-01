@@ -188,7 +188,7 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_DEPTH_COMPONENT24  ,w,h,0,  GL_DEPTH_COMPONENT  ,GL_FLOAT,NULL);
+    GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_DEPTH_COMPONENT32F ,w,h,0,  GL_DEPTH_COMPONENT  ,GL_FLOAT,NULL);
 
     GL.glGenFramebuffers(1,&fbos[fboIndex]);
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[fboIndex]);

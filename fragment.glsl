@@ -3,7 +3,6 @@
 //forward declaration
 float GetUnocclusionFactor(vec3 worldPosition);
 
-
 const float NearClippingPlane = 0.3f;
 const float FarClippingPlane = 10000.0f;
 const float MY_GL_TEXTURE_MAX_LOD = 1000.0f;
@@ -179,8 +178,9 @@ void fullRenderPass() {
         vec3 tSpecError = specContr.rgb - specContrRight.rgb;
         float specError = abs(tSpecError.r)+abs(tSpecError.g)+abs(tSpecError.b);
         if((isSpecular.x && specError > 0.003f))
-            depth = -1.0; //encoding as negative depth value
-        exchangeBuffer = depth;
+            exchangeBuffer = 0; //not reprojectable
+        else
+           exchangeBuffer = 1; // reprojectable
     }
 }
 
@@ -202,6 +202,7 @@ void main()
         uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image
 
         vec4 exchangeBufferData = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
+        float reprojectableSpecular = exchangeBufferData.r;
 
         //calculate depth difference
         float leftEyeCameraSpaceDepth = texture(exchangeBuffer2Sampler, vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))).r;
@@ -214,7 +215,6 @@ void main()
         leftEyeCameraSpaceDepth /= -FarClippingPlane;
         rightEyeCameraSpaceDepth /= -FarClippingPlane;
 
-
         float d = abs( leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference. leftEyeCameraSpaceDepth could be negative, absolute
 
         //calculate if outside the view frustum
@@ -226,7 +226,7 @@ void main()
 
         bool dontReproject =  (outsideViewFrustum
                           || d  > depthThreshold
-                          || leftEyeCameraSpaceDepth  < 0.0 //spec error too big, see in l. ~186
+                          || reprojectableSpecular  == 0.0 //spec error too big, see in l. ~186
                           || (lodError < 0.00025f)                  );
         if(dontReproject) {
             if(debugMode == 1) fullRenderPass();

@@ -18,12 +18,26 @@ GLuint ReprojectiveStereoscopicRenderer::getRightImage() {
 GLuint ReprojectiveStereoscopicRenderer::getLeftImage() {
     return renderbuffers[Left][Color];
 }
+QString ReprojectiveStereoscopicRenderer::configTags() {
+    std::stringstream ss;
+    ss << "Reprojective Renderer, Debug Mode " << (debugMode ? "true" : "false") << ", Left Z Prepass " << (leftEyeZPrepass ? "true" : "false")  << ", Right Z Prepass " << (rightEyeZPrepass ? "true" : "false") ;
+    return QString::fromStdString(ss.str());
+}
+
+void ReprojectiveStereoscopicRenderer::toggleLeftZPrepass() {
+     leftEyeZPrepass = !leftEyeZPrepass;
+}
+
+void ReprojectiveStereoscopicRenderer::toggleRightZPrepass() {
+    rightEyeZPrepass = !rightEyeZPrepass;
+}
 
 void ReprojectiveStereoscopicRenderer::toggleDebugMode() {
     GLint l = GL.glGetUniformLocation( 	shaderProgram.programId(),"debugMode");
     int value = -1;
     GL.glGetUniformiv(shaderProgram.programId(),l,&value);
     shaderProgram.setUniformValue( "debugMode", value == 1 ? 0 : 1 );
+    debugMode = value == 1 ? true : false;
 }
 
 void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
@@ -78,6 +92,23 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "V", viewLeft );
     //first draw opaque. store depth values in exchange buffer
     GL.glDisable(GL_BLEND);
+    //zprepass
+    if(leftEyeZPrepass) {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LEQUAL);
+
+        GL.glDrawBuffer(GL_NONE);
+        zPrepassShaderProgram.bind();
+        s->bind(&zPrepassShaderProgram);
+        s->draw(&zPrepassShaderProgram,viewLeft,projection, OPAQUE);
+
+        shaderProgram.bind();
+        s->bind(&shaderProgram);
+        GL.glDrawBuffers(3,drawBufs);
+    } else {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LESS);
+    }
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
 
 
@@ -109,6 +140,26 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+    //zprepass
+    if(rightEyeZPrepass) {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LEQUAL);
+
+        GL.glDrawBuffer(GL_NONE);
+        zPrepassShaderProgram.bind();
+        s->bind(&zPrepassShaderProgram);
+        s->draw(&zPrepassShaderProgram,viewRight,projection, OPAQUE);
+
+        shaderProgram.bind();
+        s->bind(&shaderProgram);
+        GL.glDrawBuffers(3,drawBufs);
+    } else {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LESS);
+    }
+
+
+
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
 
 
@@ -152,6 +203,11 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
 
 void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     CanonicalMonoscopicRenderer::initialize();
+    shaderProgram.setUniformValue("debugMode",0);
+    debugMode = true;
+    leftEyeZPrepass = false;
+    rightEyeZPrepass = false;
+
     GL.glViewport( 0, 0,w,h );
     qDebug() << w << " " << h;
     //if the framebuffers got initialized already, deallocate the memory

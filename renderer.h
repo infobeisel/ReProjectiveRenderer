@@ -24,6 +24,7 @@ public:
     virtual void setCameraPosition(QVector3D p);
     virtual void setCameraOrientation(QQuaternion q);
     virtual QOpenGLShaderProgram* getShaderProgram();
+    virtual QString configTags();//returns config tags which were set during runtime (e.g. debug mode)
     Renderer();
     ~Renderer();
 protected:

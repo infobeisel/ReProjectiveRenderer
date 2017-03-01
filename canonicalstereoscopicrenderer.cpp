@@ -4,7 +4,13 @@ CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 {
     normalizedEyeSeparation = 1.0f;
 }
+void CanonicalStereoscopicRenderer::toggleLeftZPrepass() {
+     leftEyeZPrepass = !leftEyeZPrepass;
+}
 
+void CanonicalStereoscopicRenderer::toggleRightZPrepass() {
+    rightEyeZPrepass = !rightEyeZPrepass;
+}
 void CanonicalStereoscopicRenderer::setNormalizedEyeSeparation(float e) {
     e = e > 1.0f ? 1.0f : (e < 0.0f ? 0.01f : e);
     normalizedEyeSeparation = e;
@@ -12,7 +18,11 @@ void CanonicalStereoscopicRenderer::setNormalizedEyeSeparation(float e) {
 float CanonicalStereoscopicRenderer::getNormalizedEyeSeparation() {
     return normalizedEyeSeparation;
 }
-
+QString CanonicalStereoscopicRenderer::configTags() {
+    std::stringstream ss;
+    ss << "CanonicalStereoscopicRenderer Renderer, Left Z Prepass " << (leftEyeZPrepass ? "true" : "false")  << ", Right Z Prepass " << (rightEyeZPrepass ? "true" : "false") ;
+    return QString::fromStdString(ss.str());
+}
 
 void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GLint viewport[4] = {
@@ -76,6 +86,24 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
 
     //first draw opaque, then transparent. store depth values in exchange buffer
     GL.glDisable(GL_BLEND);
+
+    //zprepass
+    if(rightEyeZPrepass) {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LEQUAL);
+
+        GL.glDrawBuffer(GL_NONE);
+        zPrepassShaderProgram.bind();
+        s->bind(&zPrepassShaderProgram);
+        s->draw(&zPrepassShaderProgram,viewLeft,projection, OPAQUE);
+
+        shaderProgram.bind();
+        s->bind(&shaderProgram);
+        GL.glDrawBuffers(2,drawBufs);
+    } else {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LESS);
+    }
     s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -95,6 +123,25 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+
+    //zprepass
+    if(rightEyeZPrepass) {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LEQUAL);
+
+        GL.glDrawBuffer(GL_NONE);
+        zPrepassShaderProgram.bind();
+        s->bind(&zPrepassShaderProgram);
+        s->draw(&zPrepassShaderProgram,viewRight,projection, OPAQUE);
+
+        shaderProgram.bind();
+        s->bind(&shaderProgram);
+        GL.glDrawBuffers(2,drawBufs);
+    } else {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LESS);
+    }
+
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -113,6 +160,9 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
 }
 
 void CanonicalStereoscopicRenderer::initialize(int w, int h) {
+
+    leftEyeZPrepass = false;
+    rightEyeZPrepass = false;
     CanonicalMonoscopicRenderer::initialize();
     GL.glViewport( 0, 0,w,h );
     qDebug() << w << " " << h;

@@ -25,9 +25,9 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new CanonicalStereoscopicRenderer();
     timer.start();
     GL.glClear(0);
-    renderer = new ReprojectiveStereoscopicRenderer();
+    //renderer = new ReprojectiveStereoscopicRenderer();
     //renderer = new CanonicalMonoscopicRenderer();
-    //renderer = new CanonicalStereoscopicRenderer();
+    renderer = new CanonicalStereoscopicRenderer();
     //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 
@@ -124,9 +124,9 @@ void CanonicalGLWindowImpl::paintGL() {
             renderer->setCameraOrientation(cameraOrientation);
         } else if(t > 1.0f){
             camTour->setValid(false); //end animation
-            fpsLogger.flush("fpslog");
-            cameraAnimationTimeLogger.flush("frametimelog");
-            pixelCountLogger.flush("reprojectedPixelCountlog");
+            fpsLogger.flush("fpslog " + renderer->configTags());
+            cameraAnimationTimeLogger.flush("frametimelog " + renderer->configTags());
+            pixelCountLogger.flush("reprojectedPixelCountlog " + renderer->configTags());
             //pixelCounter.saveReadImage("image");
         }
     }
@@ -167,7 +167,8 @@ void CanonicalGLWindowImpl::paintGL() {
 
     if(    guiUpdateTime.elapsed() > 200) {
         std::stringstream ss;
-        ss << "FPS: " << fps;
+        ss << renderer->configTags().toStdString();
+        ss << " FPS: " << fps;
         setTitle(ss.str().c_str());
         guiUpdateTime.start();
 
@@ -292,6 +293,12 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         break;
         case Qt::Key_F2:
         pixelCountersEnabled = !pixelCountersEnabled;
+        break;
+        case Qt::Key_F3:
+        ((ReprojectiveStereoscopicRenderer*)renderer)->toggleLeftZPrepass();
+        break;
+        case Qt::Key_F4:
+        ((ReprojectiveStereoscopicRenderer*)renderer)->toggleRightZPrepass();
         break;
         default:
         break;

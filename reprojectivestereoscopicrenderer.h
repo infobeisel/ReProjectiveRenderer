@@ -17,6 +17,11 @@ public:
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
     void toggleDebugMode() override;
+    QString configTags() override;
+
+    void toggleLeftZPrepass();
+    void toggleRightZPrepass();
+
     GLuint getRightImage();
     GLuint getLeftImage();
 protected:
@@ -28,9 +33,14 @@ protected:
 
     float normalizedEyeSeparation;
 
+    bool leftEyeZPrepass;
+    bool rightEyeZPrepass;
+    bool debugMode;
+
    // QElapsedTimer timer;
 
 };
 
 
 #endif // REPROJECTIVESTEREOSCOPICRENDERER_H
+

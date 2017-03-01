@@ -12,7 +12,7 @@ void ShadowMapGenerator::initialize(int w, int h)  {
 
     GL.glUseProgram(0);
     shaderProgram.removeAllShaders();
-    QString vertexShaderPath = ":/genShadowMapVert.glsl";
+    QString vertexShaderPath = ":/simpleVert.glsl";
     QString fragmentShaderPath = ":/genShadowMapFrag.glsl";
     //compile shaders
     if ( !shaderProgram.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath.toUtf8() ) ) {

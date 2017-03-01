@@ -28,6 +28,8 @@ protected:
     QVector3D cameraPosition;
     QQuaternion cameraOrientation;
 
+    QOpenGLShaderProgram zPrepassShaderProgram;
+
 };
 
 #endif // CANONICALMONOSCOPICRENDERER_H

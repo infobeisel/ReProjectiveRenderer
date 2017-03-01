@@ -8,6 +8,7 @@ void Renderer::initialize(int w, int h) {}
 void Renderer::setNormalizedEyeSeparation(float e) {}
 void Renderer::toggleDebugMode() {}
 float Renderer::getNormalizedEyeSeparation() {return 0.0f;}
+QString Renderer::configTags() {return "";}
 
 void Renderer::setProjectionMatrix(QMatrix4x4 p) {}
 void Renderer::setViewMatrix(QMatrix4x4 v) {}

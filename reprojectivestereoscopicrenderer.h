@@ -25,7 +25,7 @@ public:
     GLuint getRightImage();
     GLuint getLeftImage();
 protected:
-    enum {Color, Exchange, Depth ,NumRenderbuffers};
+    enum {Color, Exchange,Exchange2, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};
     void initializeFBO(int fboIndex, int w, int h);
     GLuint fbos[NumFBOs];

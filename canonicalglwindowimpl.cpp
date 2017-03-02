@@ -31,7 +31,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 
-    rerenderNonReprojectedPixels = false; //
+    rerenderNonReprojectedPixels = false;
     pixelCountersEnabled = false;
 
     //load models

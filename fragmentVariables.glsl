@@ -4,6 +4,7 @@
 layout(location = 0 ) out vec4 color;
 //layout(location = 1 ) out vec4 exchangeBuffer;
 layout(location = 1 ) out float exchangeBuffer;
+layout(location = 2 ) out float exchangeBuffer2;
 
 struct LightSource {
     vec3 ambient;

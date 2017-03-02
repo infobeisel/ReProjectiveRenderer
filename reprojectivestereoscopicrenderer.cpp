@@ -159,6 +159,16 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     }
 
 
+    /*
+    //if stencil texturing is available, let the right render pass only reproject pixels and write gaps into stencil image.
+    //if stencil texturing is not available, fill the gaps directly in the same render pass (performance loss)
+
+    if(GL_HasStencilTexturingExt) {
+
+    } else {
+
+    }*/
+
 
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
 
@@ -221,26 +231,6 @@ void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 
-    QVector<QString> fragmentShaderPaths = {
-        ":/fragmentFullRenderOnly.glsl",
-        ":/fragmentWithExchangeBufferWrite.glsl",
-        ":/fragmentReprojection.glsl"
-    };
-    QVector<QOpenGLShader*> fragmentShaders = {
-        fullRenderOnly,
-        fullRenderWithExchangeBufferWrites,
-        reprojectionOnly
-    };
-    int i = 0;
-    foreach (QString file , fragmentShaderPaths) {
-        fragmentShaders[i] = new QOpenGLShader(QOpenGLShader::Fragment);
-        completeFragmentShader = new QOpenGLShader(QOpenGLShader::Fragment);
-        if ( !completeFragmentShader->compileSourceFile( file  ) ) {
-            qDebug() << "ERROR (fragment shader):" << completeFragmentShader->log();
-        }
-        i++;
-    }
-
 }
 void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h) {
     GL.glGenTextures(NumRenderbuffers,renderbuffers[fboIndex]);
@@ -259,6 +249,12 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,     GL_R8     ,w,h,0,     GL_RED    ,  GL_UNSIGNED_BYTE,NULL);
 
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2]);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL.glTexImage2D(GL_TEXTURE_2D,0,     GL_R8     ,w,h,0,     GL_RED    ,  GL_UNSIGNED_BYTE,NULL);
 
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Depth]);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -271,6 +267,7 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[fboIndex]);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderbuffers[fboIndex][Color],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange],0);
+    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[fboIndex][Depth],0);
 
     GLenum status = GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);

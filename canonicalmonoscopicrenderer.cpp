@@ -71,31 +71,24 @@ void CanonicalMonoscopicRenderer::initialize() {
         ":/shadowMappingShaders/Texture.glsl",
         ":/shadowMappingShaders/Sampling.glsl",
         ":/shadowMappingShaders/Shadow_Use_PCF.glsl",
-        ":/fragmentVariables.glsl"
-
+        ":/fragmentVariables.glsl",
+        ":/fragment.glsl"
     };
     //QString fragSourceCode = QString();
     foreach (QString file , fragmentShaderPaths) {
         QFile f(file);
         if (!f.open(QFile::ReadOnly | QFile::Text)) break;
         QTextStream in(&f);
-        if ( !shaderProgram.addShaderFromSourceCode( QOpenGLShader::Fragment, in.readAll()) ) {
+        QString shaderCode =  in.readAll();
+        //static shader compilation dependent on extension availability
+        if(!GL_HasStencilTexturingExt) shaderCode.remove((const QString) QString::fromStdString("#define HasStencilTexturingExt"),Qt::CaseSensitive);
+        if ( !shaderProgram.addShaderFromSourceCode( QOpenGLShader::Fragment,shaderCode) ) {
             qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
         }
         f.close();
     }
 
-    completeFragmentShader = new QOpenGLShader(QOpenGLShader::Fragment);
-    if ( !completeFragmentShader->compileSourceFile(":/fragment.glsl"  ) ) {
-        qDebug() << "ERROR (fragment shader):" << completeFragmentShader->log();
-    }
-    if ( !shaderProgram.addShader( completeFragmentShader) ) {
-        qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
-    }
 
-    if ( !shaderProgram.link() ) {
-        qDebug() << "ERROR linking shader program:" << shaderProgram.log();
-    }
     shaderProgram.bind();
 
     shaderProgram.setUniformValue("debugMode",0);

@@ -2,14 +2,20 @@
 #define OPENGLFUNCTIONS_H
 #include <typeinfo>
 #define GL OpenGLFunctions::instance(typeid(this).name())
-
+#define GL_HasStencilTexturingExt GL.has_ARB_stencil_texturing != 0
 #include <QOpenGLFunctions_4_1_Core>
+#include <QOpenGLExtensions>
 #include <QDebug>
 #include <sstream>
+
+static int isExtensionSupported(const char *extension);
+
 class OpenGLFunctions : public QOpenGLFunctions_4_1_Core
 {
 
 public:
+
+    int  has_ARB_stencil_texturing;
 
     void CheckGLError(std::string tClassName)
     {
@@ -105,6 +111,20 @@ public:
     }
 
 
+    inline int isExtensionSupported(const char *extension)
+    {
+      GLint n, i;
+      glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+      for (i = 0; i < n; i++) {
+          //typedef unsigned char	GLubyte;
+          const GLubyte* tExt = glGetStringi(GL_EXTENSIONS, i);
+          int length = strlen((const char*)tExt);
+          int cmp = memcmp(tExt, extension,length);
+          if(cmp == 0)
+              return 1;
+      }
+      return 0;
+    }
 
 
 
@@ -115,9 +135,23 @@ public:
 private:
     OpenGLFunctions()
     {
+
         qDebug() << "initialize GL Functions";
         initializeOpenGLFunctions();
+        //test for stencil texturing
+        //02.03.2017
+        //https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_stencil_texturing.txt
+        //https://www.khronos.org/opengl/wiki/Texture#Stencil_texturing
+        //https://www.opengl.org/archives/resources/features/OGLextensions/
+#ifdef GL_ARB_stencil_texturing
+        has_ARB_stencil_texturing = isExtensionSupported("GL_ARB_stencil_texturing");
+#else
+        has_ARB_stencil_texturing = 0; //false
+#endif
+
     }
 };
+
+
 
 #endif // OPENGLFUNCTIONS_H

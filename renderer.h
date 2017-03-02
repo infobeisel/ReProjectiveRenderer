@@ -31,8 +31,6 @@ protected:
 
     //gl attributes
     QOpenGLShaderProgram shaderProgram;
-    //the fragment shader containing the main method
-    QOpenGLShader* mainFragmentShader;
 
 };
 

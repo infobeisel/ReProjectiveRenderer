@@ -34,8 +34,8 @@ uniform mat4 P;
 uniform float width;
 uniform float height;
 layout(location = 1) in vec4 cameraSpacePos; //fragment in camera space coordinates
-uniform sampler2D exchangeBufferSamplerIn;
-uniform sampler2D exchangeBuffer2SamplerIn;
+uniform sampler2D exchangeBufferSampler;
+uniform sampler2D exchangeBuffer2Sampler;
 uniform sampler2D leftImageSampler;
 //---------------------
 uniform vec3 cameraWorldPos; // the camera's world position
@@ -192,8 +192,6 @@ void fullRenderPass() {
 void main()
 {
    if(transparency == 0.0 && eyeIndex == 1) { //transparent objects get always rerendered
-
-
         //perform reprojection
         //right camera space position + translation resulting from eye separation = left camera space position
         vec4 leftCameraSpacePos = cameraSpacePos + vec4(eyeSeparation ,0.0,0.0,1.0);
@@ -203,11 +201,11 @@ void main()
         uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
         uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image
 
-        vec4 exchangeBufferData = texture(exchangeBufferSamplerIn,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
+        vec4 exchangeBufferData = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
         float reprojectableSpecular = exchangeBufferData.r;
 
         //calculate depth difference
-        float leftEyeCameraSpaceDepth = texture(exchangeBuffer2SamplerIn, vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))).r;
+        float leftEyeCameraSpaceDepth = texture(exchangeBuffer2Sampler, vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))).r;
         //linearize depth values
         float p12 = P[2][3];
         float p11 = - P[2][2];
@@ -231,7 +229,7 @@ void main()
                           || reprojectableSpecular  == 0.0 //spec error too big, see in l. ~186
                           || (lodError < 0.00025f)                  );
         if(dontReproject) {
-            if(debugMode == 1) discard;//color = vec4(1.0,1.0,0.0,1.0);//fullRenderPass(); //
+            if(debugMode == 1) fullRenderPass();
             else {
                /*if        (outsideViewFrustum) { // pink for unavailable pixels
                     color = vec4(1.0,0.0,0.8,1.0);
@@ -242,7 +240,7 @@ void main()
                 } else if ((lodError <  0.00025f)) {// undersampled areas : yellow
                     color = vec4(1.0,1.0,0.0,1.0);
                 }*/
-                color = vec4(1.0,1.0,0.0,1.0);
+                color = vec4(0.0,1.0,0.0,1.0);
             }
         } else {
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment

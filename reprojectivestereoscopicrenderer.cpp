@@ -1,5 +1,4 @@
 #include "reprojectivestereoscopicrenderer.h"
-#include <QFile>
 
 ReprojectiveStereoscopicRenderer::ReprojectiveStereoscopicRenderer()
 {
@@ -75,13 +74,13 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "width", (float)w );
     GL.glGetIntegerv(GL_VIEWPORT,viewport);
     GL.glBindFramebuffer(GL_FRAMEBUFFER,0);
-    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
     //draw to attachments
     GLenum drawBufs[3] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2};
     GL.glDrawBuffers(3,drawBufs);
-    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
@@ -116,13 +115,13 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
     //draw to attachments
     GL.glDrawBuffers(3,drawBufs);
-    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
     //bind "exchange" buffer for reading from the LEFT fbo
     GL.glActiveTexture(GL_TEXTURE0);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Exchange]);
-    shaderProgram.setUniformValue("exchangeBufferSamplerIn" , 0);
+    shaderProgram.setUniformValue("exchangeBufferSampler" , 0);
     //bind left image color buffer for reading
     GL.glActiveTexture(GL_TEXTURE1);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Color]);
@@ -130,8 +129,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     //bind left image depth buffer
     GL.glActiveTexture(GL_TEXTURE2);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Depth]);
-    shaderProgram.setUniformValue("exchangeBuffer2SamplerIn" , 2);
-
+    shaderProgram.setUniformValue("exchangeBuffer2Sampler" , 2);
 
     //GL.glClampColor(GL_CLAMP_READ_COLOR,GL_FALSE); //avoid clamping
 
@@ -159,6 +157,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LESS);
     }
+
 
 
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
@@ -221,54 +220,6 @@ void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     //qDebug() << "exchangeBuffer: " << GL.glGetFragDataLocation(shaderProgram.programId(), "exchangeBuffer");
     GL.glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-
-    QString fragmentShaderPath = ":/fragment.glsl";
-    QVector<QString> fragmentShaderDefines = {
-        "#version 410 core \n #define fullRenderShaderOnly",
-        "#version 410 core \n #define fullRenderShaderWithExchangeBuffer",
-        "#version 410 core \n #define reprojectionShader"
-    };
-    QVector<QOpenGLShaderProgram*> fragmentShaders = {
-        &fullRenderShaderOnly,
-        &fullRenderShaderWithExchangeBuffer,
-        &reprojectionShader
-    };
-    int i = 0;
-    //QString fragSourceCode = QString();
-    foreach (QString defines , fragmentShaderDefines) {
-        fragmentShaders[i]->removeAllShaders();
-        QString vertexShaderPath = ":/vertex.glsl";
-        //compile vertex shader
-        if ( !fragmentShaders[i]->addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath.toUtf8() ) ) {
-            qDebug() << "ERROR (vertex shader):" << fragmentShaders[i]->log();
-        }
-        QVector<QString> fragmentShaderPaths = {
-            ":/shadowMappingShaders/Texture.glsl",
-            ":/shadowMappingShaders/Sampling.glsl",
-            ":/shadowMappingShaders/Shadow_Use_PCF.glsl",
-            ":/fragment.glsl"
-        };
-        //set defines
-        if ( !fragmentShaders[i]->addShaderFromSourceCode( QOpenGLShader::Fragment, defines) ) {
-            qDebug() << "ERROR (fragment shader):" << fragmentShaders[i]->log();
-        }
-        //compile the main fragment shader
-        foreach (QString file , fragmentShaderPaths) {
-            QFile f(file);
-            if (!f.open(QFile::ReadOnly | QFile::Text)) break;
-            QTextStream in(&f);
-            if ( !fragmentShaders[i]->addShaderFromSourceCode( QOpenGLShader::Fragment, in.readAll()) ) {
-                qDebug() << "ERROR (fragment shader):" << fragmentShaders[i]->log();
-            }
-            f.close();
-        }
-        if ( !fragmentShaders[i]->link() ) {
-            qDebug() << "ERROR linking shader program:" << fragmentShaders[i]->log();
-        }
-        fragmentShaders[i]->setUniformValue("debugMode",0);
-        i++;
-    }
-
 }
 void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h) {
     GL.glGenTextures(NumRenderbuffers,renderbuffers[fboIndex]);
@@ -287,20 +238,19 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,     GL_R8     ,w,h,0,     GL_RED    ,  GL_UNSIGNED_BYTE,NULL);
 
+
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Depth]);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    GL.glTexImage2D(GL_TEXTURE_2D,0,    GL_DEPTH24_STENCIL8  ,w,h,0,   GL_DEPTH_STENCIL  , GL_FLOAT_32_UNSIGNED_INT_24_8_REV ,NULL); // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
-
-
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_DEPTH_COMPONENT32F ,w,h,0,  GL_DEPTH_COMPONENT  ,GL_FLOAT,NULL);
 
     GL.glGenFramebuffers(1,&fbos[fboIndex]);
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[fboIndex]);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderbuffers[fboIndex][Color],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange],0);
-    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[fboIndex][Depth],0);
+    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[fboIndex][Depth],0);
 
     GLenum status = GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     qDebug() << status;

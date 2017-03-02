@@ -118,9 +118,9 @@ void ShadowMapGenerator::draw(Scene* s) {
 }
 void ShadowMapGenerator::setShadowMapVariables(QOpenGLShaderProgram* toShader) {
     //make shadow map accessble in shader
-    GL.glActiveTexture(GL_TEXTURE4);
+    GL.glActiveTexture(GL_TEXTURE3);
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[0][Depth]);
-    toShader->setUniformValue("ShadowMap" , 4);
+    toShader->setUniformValue("ShadowMap" , 3);
     toShader->setUniformValue("ShadowCameraPosition",cameraPosition);
     QMatrix4x4 viewProj = projection * view;
     toShader->setUniformValue("ShadowCameraViewProjectionMatrix",viewProj);
@@ -159,8 +159,8 @@ void ShadowMapGenerator::initializeFBO(int fboIndex, int w , int h) {
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     // Setting texture sampling:
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
     GL.glTexImage2D(GL_TEXTURE_2D,0,   GL_DEPTH_COMPONENT   ,w,h,0,  GL_DEPTH_COMPONENT  ,GL_UNSIGNED_BYTE/*GL_FLOAT*/,NULL);
 
     GL.glGenFramebuffers(1,&fbos[fboIndex]);

@@ -8,7 +8,7 @@
 #include <QImage>
 
 //offset for possible use of first 3 texture units by the renderer for fbos
-#define TEXTURE_UNIT_OFFSET 5
+#define TEXTURE_UNIT_OFFSET 4
 
 class ClientTextureArrayManager
 {

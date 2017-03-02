@@ -1,5 +1,5 @@
 #include "reprojectivestereoscopicrenderer.h"
-
+#include <QFile>
 ReprojectiveStereoscopicRenderer::ReprojectiveStereoscopicRenderer()
 {
     normalizedEyeSeparation = 1.0f;
@@ -219,6 +219,27 @@ void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     //qDebug() << "color: " << GL.glGetFragDataLocation(shaderProgram.programId(), "color");
     //qDebug() << "exchangeBuffer: " << GL.glGetFragDataLocation(shaderProgram.programId(), "exchangeBuffer");
     GL.glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+
+    QVector<QString> fragmentShaderPaths = {
+        ":/fragmentFullRenderOnly.glsl",
+        ":/fragmentWithExchangeBufferWrite.glsl",
+        ":/fragmentReprojection.glsl"
+    };
+    QVector<QOpenGLShader*> fragmentShaders = {
+        fullRenderOnly,
+        fullRenderWithExchangeBufferWrites,
+        reprojectionOnly
+    };
+    int i = 0;
+    foreach (QString file , fragmentShaderPaths) {
+        fragmentShaders[i] = new QOpenGLShader(QOpenGLShader::Fragment);
+        completeFragmentShader = new QOpenGLShader(QOpenGLShader::Fragment);
+        if ( !completeFragmentShader->compileSourceFile( file  ) ) {
+            qDebug() << "ERROR (fragment shader):" << completeFragmentShader->log();
+        }
+        i++;
+    }
 
 }
 void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h) {

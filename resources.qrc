@@ -1,6 +1,10 @@
 <RCC>
     <qresource prefix="/">
-        <file>fragment.glsl</file>
+        <file>fragment.glsl</file>   
+	<file>fragmentFullRenderOnly.glsl</file>
+	<file>fragmentWithExchangeBufferWrite.glsl</file>
+	<file>fragmentReprojection.glsl</file>     
+	<file>fragmentVariables.glsl</file>
         <file>vertex.glsl</file>
         <file>genShadowMapFrag.glsl</file>
         <file>simpleVert.glsl</file>

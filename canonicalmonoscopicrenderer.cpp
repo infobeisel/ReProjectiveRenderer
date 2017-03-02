@@ -71,7 +71,8 @@ void CanonicalMonoscopicRenderer::initialize() {
         ":/shadowMappingShaders/Texture.glsl",
         ":/shadowMappingShaders/Sampling.glsl",
         ":/shadowMappingShaders/Shadow_Use_PCF.glsl",
-        ":/fragment.glsl"
+        ":/fragmentVariables.glsl"
+
     };
     //QString fragSourceCode = QString();
     foreach (QString file , fragmentShaderPaths) {
@@ -81,8 +82,16 @@ void CanonicalMonoscopicRenderer::initialize() {
         if ( !shaderProgram.addShaderFromSourceCode( QOpenGLShader::Fragment, in.readAll()) ) {
             qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
         }
+        f.close();
     }
 
+    completeFragmentShader = new QOpenGLShader(QOpenGLShader::Fragment);
+    if ( !completeFragmentShader->compileSourceFile(":/fragment.glsl"  ) ) {
+        qDebug() << "ERROR (fragment shader):" << completeFragmentShader->log();
+    }
+    if ( !shaderProgram.addShader( completeFragmentShader) ) {
+        qDebug() << "ERROR (fragment shader):" << shaderProgram.log();
+    }
 
     if ( !shaderProgram.link() ) {
         qDebug() << "ERROR linking shader program:" << shaderProgram.log();

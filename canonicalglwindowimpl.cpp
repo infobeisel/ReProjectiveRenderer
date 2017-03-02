@@ -25,9 +25,9 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new CanonicalStereoscopicRenderer();
     timer.start();
     GL.glClear(0);
-    //renderer = new ReprojectiveStereoscopicRenderer();
+    renderer = new ReprojectiveStereoscopicRenderer();
     //renderer = new CanonicalMonoscopicRenderer();
-    renderer = new CanonicalStereoscopicRenderer();
+    //renderer = new CanonicalStereoscopicRenderer();
     //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 

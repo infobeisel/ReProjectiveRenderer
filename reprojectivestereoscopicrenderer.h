@@ -37,6 +37,11 @@ protected:
     bool rightEyeZPrepass;
     bool debugMode;
 
+    //precompiled shader objects
+    QOpenGLShader* fullRenderOnly;
+    QOpenGLShader* fullRenderWithExchangeBufferWrites;
+    QOpenGLShader* reprojectionOnly;
+
    // QElapsedTimer timer;
 
 };

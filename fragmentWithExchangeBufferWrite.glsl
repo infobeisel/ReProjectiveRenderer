@@ -194,68 +194,7 @@ void fullRenderPass() {
 
 void main()
 {
-   if(transparency == 0.0 && eyeIndex == 1) { //transparent objects get always rerendered
-        //perform reprojection
-        //right camera space position + translation resulting from eye separation = left camera space position
-        vec4 leftCameraSpacePos = cameraSpacePos + vec4(eyeSeparation ,0.0,0.0,1.0);
-        //projection * left camera space position = Clip coordinates
-        vec4 clipSpacePosLeftEye = P * leftCameraSpacePos; //NOT between -1 and 1 yet. divde by w.
-        float uvSpaceLeftImageXCoord =   clipSpacePosLeftEye.x / clipSpacePosLeftEye.w; // between -1 and 1. NDC.
-        uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
-        uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image
-
-        vec4 exchangeBufferData = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
-        float reprojectableSpecular = exchangeBufferData.r;
-
-        //calculate depth difference
-        float leftEyeCameraSpaceDepth = texture(exchangeBuffer2Sampler, vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))).r;
-        //linearize depth values
-        float p12 = P[2][3];
-        float p11 = - P[2][2];
-        leftEyeCameraSpaceDepth         = - (p12 / ( leftEyeCameraSpaceDepth - p11));
-        float rightEyeCameraSpaceDepth  = - (p12 / ( gl_FragCoord.z - p11));
-        //normalize
-        leftEyeCameraSpaceDepth /= -FarClippingPlane;
-        rightEyeCameraSpaceDepth /= -FarClippingPlane;
-
-        float d = abs( leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference. leftEyeCameraSpaceDepth could be negative, absolute
-
-        //calculate if outside the view frustum
-        bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
-
-        //calculate over/undersampling error
-        float lodError = max(dFdx(uvSpaceLeftImageXCoord),dFdy(uvSpaceLeftImageXCoord));
-
-
-        bool dontReproject =  (outsideViewFrustum
-                          || d  > depthThreshold
-                          || reprojectableSpecular  == 0.0 //spec error too big, see in l. ~186
-                          || (lodError < 0.00025f)                  );
-        if(dontReproject) {
-            if(debugMode == 1) color = vec4(0.0,1.0,0.0,1.0);//fullRenderPass();
-            else {
-               /*if        (outsideViewFrustum) { // pink for unavailable pixels
-                    color = vec4(1.0,0.0,0.8,1.0);
-                } else if (leftEyeCameraSpaceDepth < 0.0) { // if specular,blue
-                    color = vec4(0.0,0.0,1.0,1.0);
-                } else if (d  > depthThreshold) { //green for fragments that don't pass the depth comparison test
-                    color = vec4(0.0,1.0,0.0,1.0); //d-t/t =
-                } else if ((lodError <  0.00025f)) {// undersampled areas : yellow
-                    color = vec4(1.0,1.0,0.0,1.0);
-                }*/
-                color = vec4(0.0,1.0,0.0,1.0);
-            }
-        } else {
-            color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
-        }
-
-    } else {
-        fullRenderPass();
-
-    }
-
-
-
+    fullRenderPass();
 }
 
 

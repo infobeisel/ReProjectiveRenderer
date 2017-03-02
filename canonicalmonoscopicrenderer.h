@@ -29,6 +29,7 @@ protected:
     QQuaternion cameraOrientation;
 
     QOpenGLShaderProgram zPrepassShaderProgram;
+    QOpenGLShader* completeFragmentShader; //contains whole fragment code with dynamic branching (slow)
 
 };
 

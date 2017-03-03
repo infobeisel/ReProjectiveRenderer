@@ -37,7 +37,7 @@ void ReprojectiveStereoscopicRenderer::toggleDebugMode() {
     int value = -1;
     GL.glGetUniformiv(shaderProgram.programId(),l,&value);
     shaderProgram.setUniformValue( "debugMode", value == 1 ? 0 : 1 );
-    debugMode = value == 1 ? true : false;
+    debugMode = value == 1 ? false : true;
 }
 
 void ReprojectiveStereoscopicRenderer::draw(Scene* s) {

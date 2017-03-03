@@ -28,7 +28,7 @@ void CanonicalGLWindowImpl::initializeGL() {
     renderer = new ReprojectiveStereoscopicRenderer();
     //renderer = new CanonicalMonoscopicRenderer();
     //renderer = new CanonicalStereoscopicRenderer();
-    //renderer = new ReprojectionErrorRenderer();
+   //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 
     rerenderNonReprojectedPixels = false;
@@ -127,7 +127,7 @@ void CanonicalGLWindowImpl::paintGL() {
             fpsLogger.flush("fpslog " + renderer->configTags());
             cameraAnimationTimeLogger.flush("frametimelog " + renderer->configTags());
             pixelCountLogger.flush("reprojectedPixelCountlog " + renderer->configTags());
-            //pixelCounter.saveReadImage("image");
+            pixelCounter.saveReadImage("image");
         }
     }
 
@@ -141,14 +141,7 @@ void CanonicalGLWindowImpl::paintGL() {
 
     renderer->draw(scene);
 
-    auto fps = (int)(1000.0f / ( (float)timer.elapsed() + 0.0001f));
     if(camTour->isValid() && t > 0.0f && t < 1.0f) {
-
-
-        fpsLogger.addValue(fps);
-        cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
-
-
         if(pixelCountersEnabled) {
             //count reprojected pixels
             GLuint reprojectedImage = ((ReprojectiveStereoscopicRenderer*)renderer)->getRightImage();
@@ -163,6 +156,12 @@ void CanonicalGLWindowImpl::paintGL() {
             }
 
         }
+    }
+
+    auto fps = (int)(1000.0f / ( (float)timer.elapsed() + 0.0001f));
+    if(camTour->isValid() && t > 0.0f && t < 1.0f) {
+        fpsLogger.addValue(fps);
+        cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
     }
 
     if(    guiUpdateTime.elapsed() > 200) {

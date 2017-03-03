@@ -7,7 +7,7 @@ class Scene;
 #include <QQuaternion>
 #define FarClippingPlane 1000.0f
 #define NearClippingPlane 0.3f
-#define MAX_EYE_SEPARATION 0.7f
+#define MAX_EYE_SEPARATION 0.35f
 
 class Renderer
 {

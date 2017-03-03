@@ -2,6 +2,7 @@
 #define CSVFILEHANDLE_H
 
 #include <QString>
+#include <QLocale>
 #include <fstream>
 
 template<class T>
@@ -29,8 +30,11 @@ public:
         qDebug() << "csvfilehandle: vector with " << values.size() << " entries will get flushed";
 
         int i = 0;
+        myfile << "entry count : " << values.size() << "\n";
         while( !values.isEmpty() ) {
-            myfile << std::to_string(i) << "    " << std::to_string(values.takeFirst()) << "\n";
+            QLocale eng(QLocale::English);
+            QString s1 = eng.toString(values.takeFirst());
+            myfile << s1.toStdString() << "\n";
             //qDebug() << i ;
             i++;
         }

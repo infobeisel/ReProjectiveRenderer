@@ -7,6 +7,8 @@ class ReprojectionErrorRenderer : public ReprojectiveStereoscopicRenderer
 public:
     ReprojectionErrorRenderer();
     void draw(Scene* s) override;
+    QString configTags() override;
+
 
 };
 

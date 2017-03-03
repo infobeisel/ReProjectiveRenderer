@@ -2,7 +2,7 @@
 #include <QVector>
 #include <QImage>
 
-#define MATERIAL_KA aiColor3D(0.2f,0.2f,0.2f);
+#define MATERIAL_KA aiColor3D(0.25f,0.25f,0.25f);
 
 Scene::Scene(QString fullPath)
 {

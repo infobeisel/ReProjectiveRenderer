@@ -159,7 +159,7 @@ void CanonicalGLWindowImpl::paintGL() {
                 float error = 1.0f - pixelCounter.countPixelsWithColorFraction(QColor(0,0,0,0));
                 pixelCountLogger.addValue(error);
             } else { //count pixels which would be rerendered
-                pixelCountLogger.addValue(pixelCounter.countPixelsWithColorFraction(QColor(0,255,0,255)));
+                pixelCountLogger.addValue(pixelCounter.countPixelsWithColorFraction(QColor(0,0,255,255)));
             }
 
         }

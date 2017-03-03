@@ -1,9 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>fragment.glsl</file>   
-	<file>fragmentFullRenderOnly.glsl</file>
-	<file>fragmentWithExchangeBufferWrite.glsl</file>
-	<file>fragmentReprojection.glsl</file>     
+	<file>fragCopyColorToStencil.glsl</file>
 	<file>fragmentVariables.glsl</file>
         <file>vertex.glsl</file>
         <file>genShadowMapFrag.glsl</file>

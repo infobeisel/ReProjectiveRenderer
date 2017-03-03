@@ -24,10 +24,6 @@ struct LightSource {
 extern layout(location = 0 ) out vec4 color;
 //layout(location = 1 ) out vec4 exchangeBuffer;
 extern layout(location = 1 ) out float exchangeBuffer;
-extern layout(location = 2 ) out float exchangeBuffer2;
-
-
-
 
 extern uniform int debugMode;
 
@@ -236,15 +232,9 @@ void main()
                           || (lodError < 0.00025f)                  );
         if(dontReproject) {
             //write to exchange buffer that this fragment didnt get reprojected
-            exchangeBuffer2 = 1;
 
 
-#ifdef HasStencilTexturingExt
-            if(debugMode == 1)  color = vec4(0.1,0.0,0.0,1.0);//fullRenderPass();//color = vec4(0.0,1.0,0.0,1.0);//
-#endif
-#ifndef HasStencilTexturingExt
-            if(debugMode == 1) color = vec4(0.0,1.0,0.0,1.0);//fullRenderPass(); //color = vec4(0.0,1.0,0.0,1.0);//
-#endif
+            if(debugMode == 1)  color = vec4(0.0,0.0,0.0,0.0);//fullRenderPass();//color = vec4(0.0,1.0,0.0,1.0);//
             else {
                /*if        (outsideViewFrustum) { // pink for unavailable pixels
                     color = vec4(1.0,0.0,0.8,1.0);
@@ -259,7 +249,6 @@ void main()
             }
         } else {
             //write to exchange buffer that this fragment did get reprojected
-            exchangeBuffer2 = 0;
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
         }
 

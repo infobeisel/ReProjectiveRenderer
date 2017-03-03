@@ -33,6 +33,11 @@ void CanonicalMonoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "V", view );
     s->draw(&shaderProgram,view,projection, OPAQUE);
 
+    //first draw opaque, then transparent
+    shaderProgram.setUniformValue("eyeIndex",0);
+    shaderProgram.setUniformValue( "V", view );
+    s->draw(&shaderProgram,view,projection, TRANSPARENT);
+
 
 }
 void CanonicalMonoscopicRenderer::initialize(int w, int h) {
@@ -107,9 +112,6 @@ void CanonicalMonoscopicRenderer::initialize() {
                 aspect,         // aspect ratio
                 NearClippingPlane,           // near clipping plane
                 FarClippingPlane);       // far clipping plane
-
-    //projection.ortho(-512.0f,512.0f,-512.0f,512.0f,NearClippingPlane,FarClippingPlane);
-
 
     //will be modified later
     GL.glEnable(GL_DEPTH_TEST);

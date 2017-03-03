@@ -264,8 +264,6 @@ void Scene::bind(QOpenGLShaderProgram *toProgram) {
 
 
     indexBufferObject.bind();
-
-    vertexArrayObject.release();
 }
 
 void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatrix4x4 projMatrix, materialClassifier materialTypes){
@@ -369,7 +367,7 @@ void Scene::draw(QOpenGLShaderProgram *withProgram, QMatrix4x4 viewMatrix, QMatr
                 withProgram->setUniformValue("Kd",QVector3D(kd.r,kd.g,kd.b));
                 withProgram->setUniformValue("Ks",QVector3D(ks.r,ks.g,ks.b));
                 withProgram->setUniformValue("specularExponent",shininess);
-                withProgram->setUniformValue("transparency",transparency);              
+                withProgram->setUniformValue("transparency",transparency);
                 //set texture parameters
                 aiString tpath;
                 if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &tpath, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {

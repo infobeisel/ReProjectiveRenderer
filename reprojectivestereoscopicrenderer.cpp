@@ -158,20 +158,46 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
         GL.glDepthFunc(GL_LESS);
     }
 
-
-    /*
-    //if stencil texturing is available, let the right render pass only reproject pixels and write gaps into stencil image.
-    //if stencil texturing is not available, fill the gaps directly in the same render pass (performance loss)
-
-    if(GL_HasStencilTexturingExt) {
-
-    } else {
-
-    }*/
-
-
+    //reproject fragments. if not reprojectable, give them color value (0,0,0,0)
     s->draw(&shaderProgram,viewRight,projection, OPAQUE );
 
+    //read color buffer, write into stencil buffer: 0 if color is (0,0,0,0), 1 else
+    //-> color buffer gets copied into stencil buffer.
+    copyColorBufToStencilBuf.bind();
+    plane->bind(&copyColorBufToStencilBuf);
+    QMatrix4x4 originView;
+    originView.setToIdentity();
+    originView.lookAt(
+                QVector3D(0.0f, 0.0f, 0.0f),    // Camera Position
+                QVector3D(0.0f, 0.0f, -1.0f),    // Point camera looks towards
+                QVector3D(0.0f, 1.0f, 0.0f));
+    copyColorBufToStencilBuf.setUniformValue( "height", (float)h  );
+    copyColorBufToStencilBuf.setUniformValue( "width", (float)w );
+    //bind left image color buffer for reading
+    GL.glActiveTexture(GL_TEXTURE0);
+    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[1][Color]);
+    copyColorBufToStencilBuf.setUniformValue("rightImageColor" , 0);
+    GL.glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    //draw stencil mask
+    GL.glEnable(GL_STENCIL_TEST);
+    GL.glDepthMask(GL_FALSE);
+    GL.glStencilFunc(GL_NEVER, 1, 0xFF);
+    GL.glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
+    GL.glStencilMask(0xFF);
+    GL.glClear(GL_STENCIL_BUFFER_BIT);
+    plane->draw(&copyColorBufToStencilBuf,originView,projection,OPAQUE);
+    GL.glDepthMask(GL_TRUE);
+    GL.glDrawBuffers(3,drawBufs);
+    shaderProgram.bind();
+    GL.glDepthMask(GL_TRUE);
+    GL.glStencilMask(0x00);
+    GL.glStencilFunc(GL_EQUAL, 0, 0xFF); //draw where stencil is 1
+    GL.glDepthFunc(GL_LEQUAL); //render pass in l.162 fills the depth buffer, so need less equal now.
+    shaderProgram.setUniformValue("eyeIndex",0); //full render pass
+
+    //full light calculation pass, but less costly because of early stencil test culling away a lot
+    s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+    glDisable(GL_STENCIL_TEST);
 
     //transparent objects
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
@@ -204,11 +230,6 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
     GL.glBlitFramebuffer(0,0,w,h,
                          0,0,w,h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
-
-
-
-
-
 }
 
 void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
@@ -231,6 +252,28 @@ void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 
+    copyColorBufToStencilBuf.removeAllShaders();
+    QString vertexShaderPath = ":/simpleVert.glsl";
+    QString fragmentShaderPath = ":/fragCopyColorToStencil.glsl";
+    //compile shaders
+    if ( !copyColorBufToStencilBuf.addShaderFromSourceFile( QOpenGLShader::Vertex, vertexShaderPath.toUtf8() ) ) {
+        qDebug() << "ERROR (vertex shader):" << copyColorBufToStencilBuf.log();
+    }
+    if ( !copyColorBufToStencilBuf.addShaderFromSourceFile( QOpenGLShader::Fragment, fragmentShaderPath.toUtf8() ) ) {
+        qDebug() << "ERROR (fragment shader):" << copyColorBufToStencilBuf.log();
+    }
+    if ( !copyColorBufToStencilBuf.link() ) {
+        qDebug() << "ERROR linking shader program:" << copyColorBufToStencilBuf.log();
+    }
+    copyColorBufToStencilBuf.bind();
+
+    plane = new Scene("plane/plane.fbx");
+    plane->load(&copyColorBufToStencilBuf);
+    plane->bind(&copyColorBufToStencilBuf);
+
+    shaderProgram.bind();
+
+
 }
 void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h) {
     GL.glGenTextures(NumRenderbuffers,renderbuffers[fboIndex]);
@@ -249,27 +292,20 @@ void ReprojectiveStereoscopicRenderer::initializeFBO(int fboIndex, int w , int h
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     GL.glTexImage2D(GL_TEXTURE_2D,0,     GL_R8     ,w,h,0,     GL_RED    ,  GL_UNSIGNED_BYTE,NULL);
 
-    GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2]);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL.glTexImage2D(GL_TEXTURE_2D,0,     GL_R8     ,w,h,0,     GL_RED    ,  GL_UNSIGNED_BYTE,NULL);
-
     GL.glBindTexture(GL_TEXTURE_2D,renderbuffers[fboIndex][Depth]);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL.glTexImage2D(GL_TEXTURE_2D,0,  GL_DEPTH_COMPONENT32F ,w,h,0,  GL_DEPTH_COMPONENT  ,GL_FLOAT,NULL);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    GL.glTexImage2D(GL_TEXTURE_2D,0,    GL_DEPTH24_STENCIL8  ,w,h,0,   GL_DEPTH_STENCIL  , GL_FLOAT_32_UNSIGNED_INT_24_8_REV ,NULL); // https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
 
     GL.glGenFramebuffers(1,&fbos[fboIndex]);
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[fboIndex]);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderbuffers[fboIndex][Color],0);
     GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange],0);
-    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,GL_TEXTURE_2D,renderbuffers[fboIndex][Exchange2],0);
-    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[fboIndex][Depth],0);
+    GL.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,GL_TEXTURE_2D,renderbuffers[fboIndex][Depth],0);
 
     GLenum status = GL.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     qDebug() << status;
+
 }

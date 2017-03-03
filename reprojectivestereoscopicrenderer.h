@@ -25,7 +25,7 @@ public:
     GLuint getRightImage();
     GLuint getLeftImage();
 protected:
-    enum {Color, Exchange,Exchange2, Depth ,NumRenderbuffers};
+    enum {Color, Exchange, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};
     void initializeFBO(int fboIndex, int w, int h);
     GLuint fbos[NumFBOs];
@@ -42,7 +42,8 @@ protected:
     QOpenGLShader* fullRenderWithExchangeBufferWrites;
     QOpenGLShader* reprojectionOnly;
 
-   // QElapsedTimer timer;
+    QOpenGLShaderProgram copyColorBufToStencilBuf;
+    Scene* plane;
 
 };
 

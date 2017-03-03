@@ -167,6 +167,8 @@ void fullRenderPass() {
 
     //store color
     color = tColour;
+    if(debugMode == 1 && transparency != 0.0f) //debug mode and transparent render pass
+        color = vec4(0.0,0.0,1.0,1.0);
 
 
     //store depth data
@@ -234,7 +236,7 @@ void main()
             //write to exchange buffer that this fragment didnt get reprojected
 
 
-            if(debugMode == 1)  color = vec4(0.0,0.0,0.0,0.0);//fullRenderPass();//color = vec4(0.0,1.0,0.0,1.0);//
+            if(debugMode == 0)  color = vec4(0.0,0.0,0.0,0.0);//fullRenderPass();//color = vec4(0.0,1.0,0.0,1.0);//
             else {
                /*if        (outsideViewFrustum) { // pink for unavailable pixels
                     color = vec4(1.0,0.0,0.8,1.0);

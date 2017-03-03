@@ -13,8 +13,8 @@
 #include "utils/csvfilehandle.h"
 #include "utils/pixelcounter.h"
 #include "shadowmapgenerator.h"
-#define CameraTourDurationInSeconds 5.0f
-#define CameraTourStartOffsetInSeconds 2.0f
+#define CameraTourDurationInSeconds 40.0f
+#define CameraTourStartOffsetInSeconds 3.0f
 #define NearClippingPlane 0.3f
 class CanonicalGLWindowImpl : public QOpenGLWindow
 {

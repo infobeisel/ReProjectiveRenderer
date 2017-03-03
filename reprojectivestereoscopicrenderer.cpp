@@ -234,7 +234,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
 
 void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     CanonicalMonoscopicRenderer::initialize();
-    shaderProgram.setUniformValue("debugMode",0);
+    shaderProgram.setUniformValue("debugMode",1);
     debugMode = true;
     leftEyeZPrepass = false;
     rightEyeZPrepass = false;

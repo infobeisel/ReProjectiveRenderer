@@ -9,7 +9,6 @@
 #include <fstream>
 #include <sstream>
 
-#define LOCK_FPS_MS 11
 
 CanonicalGLWindowImpl::CanonicalGLWindowImpl()
 {
@@ -25,9 +24,9 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new CanonicalStereoscopicRenderer();
     timer.start();
     GL.glClear(0);
-    renderer = new ReprojectiveStereoscopicRenderer();
+    //renderer = new ReprojectiveStereoscopicRenderer();
     //renderer = new CanonicalMonoscopicRenderer();
-    //renderer = new CanonicalStereoscopicRenderer();
+    renderer = new CanonicalStereoscopicRenderer();
    //renderer = new ReprojectionErrorRenderer();
     renderer->initialize();
 
@@ -161,7 +160,7 @@ void CanonicalGLWindowImpl::paintGL() {
     auto fps = (int)(1000.0f / ( (float)timer.elapsed() + 0.0001f));
     if(camTour->isValid() && t > 0.0f && t < 1.0f) {
         fpsLogger.addValue(fps);
-        cameraAnimationTimeLogger.addValue (( time.elapsed() / 1000.0f) / CameraTourDurationInSeconds);
+        cameraAnimationTimeLogger.addValue (t);
     }
 
     if(    guiUpdateTime.elapsed() > 200) {

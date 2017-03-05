@@ -18,6 +18,7 @@ public:
     void setViewMatrix(QMatrix4x4 v) override;
     void setCameraPosition(QVector3D p) override;
     void setCameraOrientation(QQuaternion q) override;
+    QString configTags() override;
 
 
 protected:

@@ -13,6 +13,11 @@ void CanonicalMonoscopicRenderer::setCameraPosition(QVector3D p) {
 void CanonicalMonoscopicRenderer::setCameraOrientation(QQuaternion p) {
     cameraOrientation = p;
 }
+QString CanonicalMonoscopicRenderer::configTags() {
+    std::stringstream ss;
+    ss << "CanonicalMonoscopicRenderer" ;
+    return QString::fromStdString(ss.str());
+}
 void CanonicalMonoscopicRenderer::setNormalizedEyeSeparation(float e) {}
 float CanonicalMonoscopicRenderer::getNormalizedEyeSeparation() {return 0.0f;}
 void CanonicalMonoscopicRenderer::draw(Scene* s) {

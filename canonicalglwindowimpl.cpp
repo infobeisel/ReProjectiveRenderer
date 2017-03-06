@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 
+#include <configuration.h>
 
 CanonicalGLWindowImpl::CanonicalGLWindowImpl()
 {
@@ -24,11 +25,18 @@ void CanonicalGLWindowImpl::initializeGL() {
     //renderer = new CanonicalStereoscopicRenderer();
     timer.start();
     GL.glClear(0);
-    //renderer = new ReprojectiveStereoscopicRenderer();
-    //renderer = new CanonicalMonoscopicRenderer();
-    renderer = new CanonicalStereoscopicRenderer();
-   //renderer = new ReprojectionErrorRenderer();
+
+    if(Configuration::instance().RenderType == 0) {
+        renderer = new CanonicalMonoscopicRenderer();
+    } else if (Configuration::instance().RenderType == 1) {
+        renderer = new CanonicalStereoscopicRenderer();
+    } else if (Configuration::instance().RenderType == 2) {
+        renderer = new ReprojectiveStereoscopicRenderer();
+    } else if (Configuration::instance().RenderType == 3) {
+        renderer = new ReprojectionErrorRenderer();
+    }
     renderer->initialize();
+
 
     rerenderNonReprojectedPixels = false;
     pixelCountersEnabled = false;
@@ -89,7 +97,7 @@ void CanonicalGLWindowImpl::resizeGL(int w, int h) {
     GL.glViewport( 0, 0, w, h );
     QMatrix4x4 nProj = QMatrix4x4();
     nProj.setToIdentity();
-    nProj.perspective(FOV, (float)w/h, NearClippingPlane, FarClippingPlane);
+    nProj.perspective(Configuration::instance().FoV, (float)w/h, Configuration::instance().NearClippingPlane, Configuration::instance().FarClippingPlane);
 
     //nProj.ortho(-(float)w/2.0f,(float)w/2.0f,-(float)h/2.0f,(float)h/2.0f,NearClippingPlane,FarClippingPlane);
     renderer->setProjectionMatrix(nProj);
@@ -108,7 +116,7 @@ void CanonicalGLWindowImpl::paintGL() {
     handleCursor(&nView);
 
     //animated movement
-    float t =  (( time.elapsed() / 1000.0f) - CameraTourStartOffsetInSeconds) / CameraTourDurationInSeconds;
+    float t =  (( time.elapsed() / 1000.0f) - Configuration::instance().CameraTourStartOffsetInSeconds) / Configuration::instance().CameraTourDurationInSeconds;
     if(camTour->isValid()) {
         if(t > 0.0f && t < 1.0f) { //camera animation has not ended yet
             QVector3D position;

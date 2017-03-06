@@ -1,6 +1,6 @@
 #include "shadowmapgenerator.h"
 #include "utils/assimpscenesearch.h"
-
+#include "configuration.h"
 ShadowMapGenerator::ShadowMapGenerator()
 {
 }
@@ -101,7 +101,7 @@ void ShadowMapGenerator::draw(Scene* s) {
 
                 projection.setToIdentity();
                 //projection.ortho(-mapResolution[0],mapResolution[0],-mapResolution[1],mapResolution[1],NearClippingPlane,FarClippingPlane);
-                projection.ortho(-100,100,-100,100,NearClippingPlane,FarClippingPlane);
+                projection.ortho(-100,100,-100,100,Configuration::instance().NearClippingPlane,Configuration::instance().FarClippingPlane);
 
                 GL.glDrawBuffer(GL_COLOR_ATTACHMENT0);
                 s->draw(&shaderProgram,view,projection, OPAQUE);

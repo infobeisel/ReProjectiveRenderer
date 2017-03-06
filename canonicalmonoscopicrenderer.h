@@ -1,7 +1,6 @@
 #ifndef CANONICALMONOSCOPICRENDERER_H
 #define CANONICALMONOSCOPICRENDERER_H
 
-#define FOV 60.0f
 #include "scene.h"
 #include "renderer.h"
 

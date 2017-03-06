@@ -63,7 +63,8 @@ HEADERS += \
     utils/assimpscenesearch.h \
     utils/csvfilehandle.h \
     shadowmapgenerator.h \
-    utils/pixelcounter.h
+    utils/pixelcounter.h \
+    configuration.h
 
 #added assimp as external library in the project directory...
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/assimp/lib/release/ -lassimp

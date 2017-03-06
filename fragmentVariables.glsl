@@ -1,10 +1,13 @@
 #version 410 core
 
 
+
 layout(location = 0 ) out vec4 color;
 //layout(location = 1 ) out vec4 exchangeBuffer;
 layout(location = 1 ) out float exchangeBuffer;
 layout(location = 2 ) out float exchangeBuffer2;
+
+
 
 struct LightSource {
     vec3 ambient;
@@ -18,12 +21,20 @@ struct LightSource {
 };
 
 uniform int debugMode;
+uniform float NearClippingPlane;
+uniform float FarClippingPlane;
+
+//reprojective parameters
+uniform float SpecularError;
+uniform float LodError;
+uniform float depthThreshold; //threshold for discriminating occluded fragments from reusable fragments
+
+
 
 //Stereoscopic related
 uniform int eyeIndex;
 uniform float eyeSeparation; // in centimeters
 uniform vec3 rightCameraWorldPos;
-uniform float depthThreshold; //threshold for discriminating occluded fragments from reusable fragments
 uniform mat4 V;
 uniform mat4 P;
 uniform float width;

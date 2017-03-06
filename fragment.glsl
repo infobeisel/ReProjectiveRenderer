@@ -4,8 +4,7 @@
 
 //forward declaration & constants
 float GetUnocclusionFactor(vec3 worldPosition);
-const float NearClippingPlane = 0.3f;
-const float FarClippingPlane = 1000.0f;
+
 const float MY_GL_TEXTURE_MAX_LOD = 1000.0f;
 
 struct LightSource {
@@ -21,17 +20,25 @@ struct LightSource {
 
 
 
+
 extern layout(location = 0 ) out vec4 color;
 //layout(location = 1 ) out vec4 exchangeBuffer;
 extern layout(location = 1 ) out float exchangeBuffer;
 
 extern uniform int debugMode;
+extern uniform float NearClippingPlane;
+extern uniform float FarClippingPlane;
+
+
+//reprojective parameters
+extern uniform float SpecularError;
+extern uniform float LodError;
+extern uniform float depthThreshold; //threshold for discriminating occluded fragments from reusable fragments
+extern uniform float eyeSeparation; // in centimeters
 
 //Stereoscopic related
 extern uniform int eyeIndex;
-extern uniform float eyeSeparation; // in centimeters
 extern uniform vec3 rightCameraWorldPos;
-extern uniform float depthThreshold; //threshold for discriminating occluded fragments from reusable fragments
 extern uniform mat4 V;
 extern uniform mat4 P;
 extern uniform float width;
@@ -181,7 +188,7 @@ void fullRenderPass() {
         isSpecular.x = (isSpecular.x  == false || isSpecular.y  == false || isSpecular.z  == false);
         vec3 tSpecError = specContr.rgb - specContrRight.rgb;
         float specError = abs(tSpecError.r)+abs(tSpecError.g)+abs(tSpecError.b);
-        if((isSpecular.x && specError > 0.003f))
+        if((isSpecular.x && specError > SpecularError))
             exchangeBuffer = 0; //not reprojectable
         else
            exchangeBuffer = 1; // reprojectable
@@ -225,13 +232,13 @@ void main()
         bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
         //calculate over/undersampling error
-        float lodError = max(dFdx(uvSpaceLeftImageXCoord),dFdy(uvSpaceLeftImageXCoord));
+        float lodErr = max(dFdx(uvSpaceLeftImageXCoord),dFdy(uvSpaceLeftImageXCoord));
 
 
         bool dontReproject =  (outsideViewFrustum
                           || d  > depthThreshold
                           || reprojectableSpecular  == 0.0 //spec error too big, see in l. ~186
-                          || (lodError < 0.00025f)                  );
+                          || (lodErr < LodError )                  );
         if(dontReproject) {
             //write to exchange buffer that this fragment didnt get reprojected
 
@@ -244,7 +251,7 @@ void main()
                     color = vec4(0.0,0.0,1.0,1.0);
                 } else if (d  > depthThreshold) { //green for fragments that don't pass the depth comparison test
                     color = vec4(0.0,1.0,0.0,1.0); //d-t/t =
-                } else if ((lodError <  0.00025f)) {// undersampled areas : yellow
+                } else if ((lodErr <  0.00025f)) {// undersampled areas : yellow
                     color = vec4(1.0,1.0,0.0,1.0);
                 }*/
                 color = vec4(0.0,0.0,1.0,1.0);

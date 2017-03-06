@@ -1,5 +1,6 @@
 #include "canonicalmonoscopicrenderer.h"
 #include <QFile>
+#include "configuration.h"
 CanonicalMonoscopicRenderer::CanonicalMonoscopicRenderer()
 {
 }
@@ -102,6 +103,13 @@ void CanonicalMonoscopicRenderer::initialize() {
     shaderProgram.bind();
 
     shaderProgram.setUniformValue("debugMode",0);
+    shaderProgram.setUniformValue("NearClippingPlane",Configuration::instance().NearClippingPlane);
+    shaderProgram.setUniformValue("FarClippingPlane",Configuration::instance().FarClippingPlane);
+
+    //shaderProgram.setUniformValue("depthThreshold",Configuration::instance().DepthThreshold);
+    shaderProgram.setUniformValue("LodError",Configuration::instance().LodError);
+    shaderProgram.setUniformValue("SpecularError",Configuration::instance().SpecularError);
+
 
     //configure view & projection matrix
     view.setToIdentity();
@@ -113,10 +121,10 @@ void CanonicalMonoscopicRenderer::initialize() {
     float aspect = 4.0f/3.0f;
     projection.setToIdentity();
     projection.perspective(
-                FOV,          // field of vision
+                Configuration::instance().FoV,          // field of vision
                 aspect,         // aspect ratio
-                NearClippingPlane,           // near clipping plane
-                FarClippingPlane);       // far clipping plane
+                Configuration::instance().NearClippingPlane,           // near clipping plane
+                Configuration::instance().FarClippingPlane);       // far clipping plane
 
     //will be modified later
     GL.glEnable(GL_DEPTH_TEST);

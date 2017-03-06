@@ -1,5 +1,6 @@
 #include "reprojectivestereoscopicrenderer.h"
 #include <QFile>
+#include "configuration.h"
 ReprojectiveStereoscopicRenderer::ReprojectiveStereoscopicRenderer()
 {
     normalizedEyeSeparation = 1.0f;
@@ -46,7 +47,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     };
     GL.glGetIntegerv(GL_VIEWPORT,viewport);
     //prepare view matrices for left and right eye
-    float eyeSeparation = MAX_EYE_SEPARATION * normalizedEyeSeparation;
+    float eyeSeparation = Configuration::instance().MaxEyeSeparation * normalizedEyeSeparation;
     QVector3D up = cameraOrientation.rotatedVector(QVector3D(0.0f,1.0f,0.0f));
     QVector3D forward = cameraOrientation.rotatedVector(QVector3D(0.0f,0.0f,-1.0f));
     QVector3D right = cameraOrientation.rotatedVector(QVector3D(1.0f,0.0f,0.0f));
@@ -67,7 +68,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     //depth difference threshold to recognize non-reusable fragments
     //shaderProgram.setUniformValue( "depthDifThreshold", eyeSeparation );
     //qDebug() <<  eyeSeparation /  FarClippingPlane / 1000.0f;
-    shaderProgram.setUniformValue( "depthThreshold",eyeSeparation / FarClippingPlane / 10.0f );
+    shaderProgram.setUniformValue( "depthThreshold",eyeSeparation / Configuration::instance().FarClippingPlane / 10.0f );
     //set projection matrix (which is the same for both eyes)
     shaderProgram.setUniformValue( "P", projection );
     shaderProgram.setUniformValue( "height", (float)h  );

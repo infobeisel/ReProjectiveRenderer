@@ -1,4 +1,5 @@
 #include "canonicalstereoscopicrenderer.h"
+#include "configuration.h"
 
 CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 {
@@ -31,7 +32,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glGetIntegerv(GL_VIEWPORT,viewport);
 
     //prepare view matrices for left and right eye
-    float eyeSeparation = MAX_EYE_SEPARATION * normalizedEyeSeparation;
+    float eyeSeparation = Configuration::instance().MaxEyeSeparation * normalizedEyeSeparation;
 
 
     QVector3D up = cameraOrientation.rotatedVector(QVector3D(0.0f,1.0f,0.0f));

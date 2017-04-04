@@ -218,13 +218,19 @@ void main()
         //calculate depth difference
         float leftEyeCameraSpaceDepth = texture(exchangeBuffer2Sampler, vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))).r;
         //linearize depth values
-        float p12 = P[2][3];
-        float p11 = - P[2][2];
-        leftEyeCameraSpaceDepth         = - (p12 / ( leftEyeCameraSpaceDepth - p11));
-        float rightEyeCameraSpaceDepth  = - (p12 / ( gl_FragCoord.z - p11));
+        //float p12 = P[2][3];
+        //float p11 = - P[2][2];
+        //leftEyeCameraSpaceDepth         = - (p12 / ( leftEyeCameraSpaceDepth - p11));
+        //float rightEyeCameraSpaceDepth  = - (p12 / ( gl_FragCoord.z - p11));
+        float p33 = P[2][2];
+        float p43 = P[3][2];
+        leftEyeCameraSpaceDepth         = ( - p43 / (leftEyeCameraSpaceDepth + p33));
+        float rightEyeCameraSpaceDepth  = ( - p43 / (gl_FragCoord.z + p33));
+
+
         //normalize
-        leftEyeCameraSpaceDepth /= -FarClippingPlane;
-        rightEyeCameraSpaceDepth /= -FarClippingPlane;
+        leftEyeCameraSpaceDepth /= FarClippingPlane;
+        rightEyeCameraSpaceDepth /= FarClippingPlane;
 
         float d = abs( leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference. leftEyeCameraSpaceDepth could be negative, absolute
 

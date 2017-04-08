@@ -16,7 +16,7 @@ public:
     virtual void toggleDebugMode();
     virtual void setNormalizedEyeSeparation(float e);
     virtual float getNormalizedEyeSeparation();
-    virtual void setProjectionMatrix(QMatrix4x4 p);
+    virtual void setProjectionMatrix(float fov,float aspect, float near, float far);
     virtual void setViewMatrix(QMatrix4x4 v);
     virtual void setCameraPosition(QVector3D p);
     virtual void setCameraOrientation(QQuaternion q);

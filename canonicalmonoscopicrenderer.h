@@ -13,7 +13,7 @@ public:
     void initialize(int w, int h) override;
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
-    void setProjectionMatrix(QMatrix4x4 p) override;
+    void virtual setProjectionMatrix(float fov,float aspect, float near, float far) override;
     void setViewMatrix(QMatrix4x4 v) override;
     void setCameraPosition(QVector3D p) override;
     void setCameraOrientation(QQuaternion q) override;

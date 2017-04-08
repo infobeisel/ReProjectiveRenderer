@@ -4,7 +4,15 @@
 CanonicalMonoscopicRenderer::CanonicalMonoscopicRenderer()
 {
 }
-void CanonicalMonoscopicRenderer::setProjectionMatrix(QMatrix4x4 p) {projection = p;}
+void CanonicalMonoscopicRenderer::setProjectionMatrix(float fov,float aspect, float near, float far) {
+    projection.setToIdentity();
+    projection.perspective(
+                fov,          // field of vision
+                aspect,         // aspect ratio
+                near,           // near clipping plane
+                far);       // far clipping plane
+}
+
 void CanonicalMonoscopicRenderer::setViewMatrix(QMatrix4x4 v) {view = v;}
 void CanonicalMonoscopicRenderer::setCameraPosition(QVector3D p) {
     cameraPosition = p;
@@ -118,13 +126,9 @@ void CanonicalMonoscopicRenderer::initialize() {
                 QVector3D(0.0f, 0.0f, -1.0f),    // Point camera looks towards
                 QVector3D(0.0f, 1.0f, 0.0f));   // Up vector
 
-    float aspect = 4.0f/3.0f;
-    projection.setToIdentity();
-    projection.perspective(
-                Configuration::instance().FoV,          // field of vision
-                aspect,         // aspect ratio
-                Configuration::instance().NearClippingPlane,           // near clipping plane
-                Configuration::instance().FarClippingPlane);       // far clipping plane
+
+    setProjectionMatrix(Configuration::instance().FoV, 4.0f/3.0f, Configuration::instance().NearClippingPlane, Configuration::instance().FarClippingPlane);
+
 
     //will be modified later
     GL.glEnable(GL_DEPTH_TEST);

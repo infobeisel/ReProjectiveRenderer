@@ -1,6 +1,6 @@
 #include "canonicalstereoscopicrenderer.h"
 #include "configuration.h"
-
+#include <QtCore/qmath.h>
 CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 {
     normalizedEyeSeparation = 1.0f;
@@ -8,6 +8,42 @@ CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 void CanonicalStereoscopicRenderer::toggleLeftZPrepass() {
      leftEyeZPrepass = !leftEyeZPrepass;
 }
+
+void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, float near, float far) {
+    projection.setToIdentity();
+    projection.perspective(
+                fov,          // field of vision
+                aspect,         // aspect ratio
+                near,           // near clipping plane
+                far);       // far clipping plane
+
+    //derive left and right eye projection matrices
+    leftProjection = projection;
+    rightProjection = projection;
+    qreal radians = (fov / 2.0f) * M_PI / 180.0f;
+    qreal sine = qSin(radians);
+    qreal cotan = qCos(radians) / sine;
+    float eyeSeparation = Configuration::instance().MaxEyeSeparation * normalizedEyeSeparation;
+    //  2n/r-l = cotan(fov) / aspect <=> r-l = 2aspect * n / cotan(fov)
+    float nearWidth =  (aspect * 2.0f * near) / cotan;
+    float r = nearWidth / 2.0f;
+    float l = -nearWidth / 2.0f;
+
+    /*
+     * set 2n/r-l and r+l/r-l
+     *
+     * */
+    QVector4D firstRowLeft = leftProjection.row(0);
+    QVector4D firstRowRight = rightProjection.row(0);
+    firstRowLeft.setX( 2.0f * near / ( r - l + eyeSeparation));
+    firstRowRight.setX(2.0f * near / ( r - l - eyeSeparation));
+    firstRowLeft.setZ( ( r + l ) / ( r - l + eyeSeparation));
+    firstRowRight.setZ(( r + l ) / ( r - l - eyeSeparation));
+    leftProjection.setRow(0,firstRowLeft);
+    rightProjection.setRow(0,firstRowRight);
+
+}
+
 
 void CanonicalStereoscopicRenderer::toggleRightZPrepass() {
     rightEyeZPrepass = !rightEyeZPrepass;
@@ -96,7 +132,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
         GL.glDrawBuffer(GL_NONE);
         zPrepassShaderProgram.bind();
         s->bind(&zPrepassShaderProgram);
-        s->draw(&zPrepassShaderProgram,viewLeft,projection, OPAQUE);
+        s->draw(&zPrepassShaderProgram,viewLeft,leftProjection, OPAQUE);
 
         shaderProgram.bind();
         s->bind(&shaderProgram);
@@ -105,10 +141,10 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LESS);
     }
-    s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
+    s->draw(&shaderProgram,viewLeft,leftProjection, OPAQUE);
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
+    s->draw(&shaderProgram,viewLeft,leftProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
@@ -133,7 +169,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
         GL.glDrawBuffer(GL_NONE);
         zPrepassShaderProgram.bind();
         s->bind(&zPrepassShaderProgram);
-        s->draw(&zPrepassShaderProgram,viewRight,projection, OPAQUE);
+        s->draw(&zPrepassShaderProgram,viewRight,rightProjection, OPAQUE);
 
         shaderProgram.bind();
         s->bind(&shaderProgram);
@@ -143,10 +179,10 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
         GL.glDepthFunc(GL_LESS);
     }
 
-    s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+    s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
+    s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
     //blit framebuffer data to screen

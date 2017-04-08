@@ -39,8 +39,8 @@ extern uniform float eyeSeparation; // in centimeters
 //Stereoscopic related
 extern uniform int eyeIndex;
 extern uniform vec3 rightCameraWorldPos;
-extern uniform mat4 V;
 extern uniform mat4 P;
+extern uniform mat4 R; //the reprojection matrix
 extern uniform float width;
 extern uniform float height;
 extern layout(location = 1) in vec4 cameraSpacePos; //fragment in camera space coordinates
@@ -180,7 +180,6 @@ void fullRenderPass() {
 
     //store depth data
     if(eyeIndex == 0) {
-        float depth = - cameraSpacePos.z / FarClippingPlane ; // z is in negative in opengl camera space. division by far plane to get normalized value
         //calculate specular contribution for right eye in left eye pass, write error in exchange buffer
         //specular error
         bvec3 isSpecular;

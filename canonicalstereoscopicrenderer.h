@@ -16,6 +16,7 @@ public:
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
     QString configTags() override;
+    void setProjectionMatrix(float fov,float aspect, float near, float far) override;
 
     void toggleLeftZPrepass();
     void toggleRightZPrepass();
@@ -32,6 +33,11 @@ private:
    // QElapsedTimer timer;
     bool leftEyeZPrepass;
     bool rightEyeZPrepass;
+
+    QMatrix4x4 leftProjection;
+    QMatrix4x4 rightProjection;
+
+
 };
 
 #endif // CANONICALSTEROSCOPICRENDERER_H

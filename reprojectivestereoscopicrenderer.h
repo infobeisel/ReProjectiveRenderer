@@ -3,10 +3,11 @@
 
 
 #include "canonicalmonoscopicrenderer.h"
+#include "canonicalstereoscopicrenderer.h"
 #include <QElapsedTimer>
 #include "utils/pixelcounter.h"
 
-class ReprojectiveStereoscopicRenderer : public CanonicalMonoscopicRenderer
+class ReprojectiveStereoscopicRenderer : public CanonicalStereoscopicRenderer
 {
 public:
     ReprojectiveStereoscopicRenderer();

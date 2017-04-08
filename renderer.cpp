@@ -10,7 +10,8 @@ void Renderer::toggleDebugMode() {}
 float Renderer::getNormalizedEyeSeparation() {return 0.0f;}
 QString Renderer::configTags() {return "";}
 
-void Renderer::setProjectionMatrix(QMatrix4x4 p) {}
+void Renderer::setProjectionMatrix(float fov,float aspect, float near, float far) {}
+
 void Renderer::setViewMatrix(QMatrix4x4 v) {}
 void Renderer::setCameraPosition(QVector3D p) {}
 void Renderer::setCameraOrientation(QQuaternion q) {}

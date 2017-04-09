@@ -4,7 +4,7 @@
 
 QString ReprojectionErrorRenderer::configTags() {
     std::stringstream ss;
-    ss << "ReprojectionErrorRenderer, Debug Mode " << (debugMode ? "true" : "false") << ", Left Z Prepass " << (leftEyeZPrepass ? "true" : "false")  << ", Right Z Prepass " << (rightEyeZPrepass ? "true" : "false") ;
+    ss << "ReprojectionErrorRenderer, Debug Mode " << (debugMode ? "true" : "false") << ", Z Prepass " << (zPrepass ? "true" : "false")  ;
     return QString::fromStdString(ss.str());
 }
 
@@ -29,6 +29,40 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     viewRight.setToIdentity();
     viewRight.lookAt(cameraPosition + (right * eyeSeparation / 2.0f) , cameraPosition + (right * eyeSeparation / 2.0f) + forward,up);
 
+    //Reprojection matrix
+    QMatrix4x4 reprojection;
+    reprojection.setToIdentity();
+
+    //reprojection = leftProjection * viewLeft * viewRight.inverted() * rightProjection.inverted();
+
+    //extract a_l,a_r,b_l,b_r,e,f,d, from projection matrices
+    QVector4D firstRowLeft = leftProjection.row(0);
+    QVector4D firstRowRight = rightProjection.row(0);
+    QVector4D thirdRow = projection.row(2);
+
+    float f = -1;
+    float d = thirdRow.z();
+    float e = thirdRow.w();
+    float a = firstRowLeft.x();
+    float b_l = firstRowLeft.z();
+    float b_r = firstRowRight.z();
+
+    QVector4D firstRowR = QVector4D(
+                1.0,
+                0.0f,
+                 eyeSeparation * a / e,
+                (-b_r / f ) - ((d * eyeSeparation * a) / (f * e)) + (b_l / f)
+                );
+    reprojection.setRow(0,firstRowR);
+    shaderProgram.setUniformValue( "R", reprojection );
+
+
+
+
+
+
+
+
     QVector3D originalCameraPosition = cameraPosition;
     QVector3D leftCameraPosition = originalCameraPosition - (right * eyeSeparation / 2.0f);
     QVector3D rightCameraPosition = originalCameraPosition + (right * eyeSeparation / 2.0f);
@@ -39,9 +73,8 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     //depth difference threshold to recognize non-reusable fragments
     //shaderProgram.setUniformValue( "depthDifThreshold", eyeSeparation );
     //qDebug() <<  eyeSeparation /  FarClippingPlane / 1000.0f;
-    shaderProgram.setUniformValue( "depthThreshold",eyeSeparation / Configuration::instance().FarClippingPlane / 10.0f );
-    //set projection matrix (which is the same for both eyes)
-    shaderProgram.setUniformValue( "P", projection );
+    shaderProgram.setUniformValue( "depthThreshold",Configuration::instance().DepthThreshold );
+
     shaderProgram.setUniformValue( "height", (float)h  );
     shaderProgram.setUniformValue( "width", (float)w );
     GL.glGetIntegerv(GL_VIEWPORT,viewport);
@@ -56,23 +89,24 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
-    GL.glViewport( 0, 0,w,h );
+    GL.glViewport( 0, 0,w,h/2 );
     setCameraPosition(leftCameraPosition);
     //set right camera position as well, used in fragment shader
     shaderProgram.setUniformValue("rightCameraWorldPos",rightCameraPosition);
+    //set projection matrix
+    shaderProgram.setUniformValue( "P", projection );
 
-    shaderProgram.setUniformValue( "V", viewLeft );
     //first draw opaque. store depth values in exchange buffer
     GL.glDisable(GL_BLEND);
     //zprepass
-    if(leftEyeZPrepass) {
+    if(zPrepass) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LEQUAL);
 
         GL.glDrawBuffer(GL_NONE);
         zPrepassShaderProgram.bind();
         s->bind(&zPrepassShaderProgram);
-        s->draw(&zPrepassShaderProgram,viewLeft,projection, OPAQUE);
+        s->draw(&zPrepassShaderProgram,viewLeft,leftProjection, OPAQUE);
 
         shaderProgram.bind();
         s->bind(&shaderProgram);
@@ -81,7 +115,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LESS);
     }
-    s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
+    s->draw(&shaderProgram,viewLeft,leftProjection, OPAQUE);
 
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
@@ -107,20 +141,23 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
 
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
+    //set projection matrix
+    shaderProgram.setUniformValue( "P", rightProjection );
+
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,h );
+    GL.glViewport( 0, 0,w,h/2 );
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     //zprepass
-    if(rightEyeZPrepass) {
+    if(zPrepass) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LEQUAL);
 
         GL.glDrawBuffer(GL_NONE);
         zPrepassShaderProgram.bind();
         s->bind(&zPrepassShaderProgram);
-        s->draw(&zPrepassShaderProgram,viewRight,projection, OPAQUE);
+        s->draw(&zPrepassShaderProgram,viewRight,rightProjection, OPAQUE);
 
         shaderProgram.bind();
         s->bind(&shaderProgram);
@@ -131,7 +168,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     }
 
     //reproject fragments. if not reprojectable, give them color value (0,0,0,0)
-    s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+    s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
 
     //read color buffer, write into stencil buffer: 0 if color is (0,0,0,0), 1 else
     //-> color buffer gets copied into stencil buffer.
@@ -168,34 +205,35 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",0); //full render pass
 
     //full light calculation pass, but less costly because of early stencil test culling away a lot
-    s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+    if(!debugMode) s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
     glDisable(GL_STENCIL_TEST);
 
     //transparent objects
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",0);
-    GL.glViewport( 0, 0,w,h );
+    GL.glViewport( 0, 0,w,h/2 );
     setCameraPosition(leftCameraPosition);
-    shaderProgram.setUniformValue( "V", viewLeft );
+    shaderProgram.setUniformValue( "P", leftProjection );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
+    s->draw(&shaderProgram,viewLeft,leftProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,h );
+    GL.glViewport( 0, 0,w,h/2 );
     setCameraPosition(rightCameraPosition);
-    shaderProgram.setUniformValue( "V", viewRight );
+    shaderProgram.setUniformValue( "P", rightProjection );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
+    s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
 
-    //now draw right again, but on the left image
+    //again right eye, but in left buffer
+
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //right
     //draw to attachments
     GL.glDrawBuffers(2,drawBufs);
@@ -204,17 +242,37 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
     shaderProgram.setUniformValue("eyeIndex",0);
-    GL.glViewport( 0, 0,w,h );
-
+    GL.glViewport( 0, 0,w,h/2 );
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
-    s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+
+    //zprepass
+    if(zPrepass) {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LEQUAL);
+
+        GL.glDrawBuffer(GL_NONE);
+        zPrepassShaderProgram.bind();
+        s->bind(&zPrepassShaderProgram);
+        s->draw(&zPrepassShaderProgram,viewRight,rightProjection, OPAQUE);
+
+        shaderProgram.bind();
+        s->bind(&shaderProgram);
+        GL.glDrawBuffers(2,drawBufs);
+    } else {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LESS);
+    }
+
+    s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
+    s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
+
+    GL.glViewport( 0, 0,w,2 *h );
 
     //blit framebuffer data to screen
     GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);
@@ -222,9 +280,18 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     //GLenum status = GL.glGetError();
     //qDebug() << status;
     GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-    GL.glBlitFramebuffer(0,0,w,h,
-                         0,0,w,h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    GL.glBlitFramebuffer(0,0,w,h/2,
+    0,0,w,h/2, GL_COLOR_BUFFER_BIT,GL_NEAREST);
 
+
+    //blit framebuffer data to screen
+    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
+    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    //GLenum status = GL.glGetError();
+    //qDebug() << status;
+    GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
+    GL.glBlitFramebuffer(0,0  ,w,h/2,
+    0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
 
 }
 

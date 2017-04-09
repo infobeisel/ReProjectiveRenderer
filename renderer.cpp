@@ -15,4 +15,6 @@ void Renderer::setProjectionMatrix(float fov,float aspect, float near, float far
 void Renderer::setViewMatrix(QMatrix4x4 v) {}
 void Renderer::setCameraPosition(QVector3D p) {}
 void Renderer::setCameraOrientation(QQuaternion q) {}
+void Renderer::toggleZPrepass(){}
+
 QOpenGLShaderProgram* Renderer::getShaderProgram() {return &shaderProgram;}

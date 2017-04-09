@@ -18,9 +18,6 @@ public:
     QString configTags() override;
     void setProjectionMatrix(float fov,float aspect, float near, float far) override;
 
-    void toggleLeftZPrepass();
-    void toggleRightZPrepass();
-
 private:
     enum {Color, Exchange, Depth ,NumRenderbuffers};
     enum {Left, Right,NumFBOs};
@@ -31,8 +28,6 @@ private:
     float normalizedEyeSeparation;
 
    // QElapsedTimer timer;
-    bool leftEyeZPrepass;
-    bool rightEyeZPrepass;
 protected:
     QMatrix4x4 leftProjection;
     QMatrix4x4 rightProjection;

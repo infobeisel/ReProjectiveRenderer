@@ -298,10 +298,7 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         pixelCountersEnabled = !pixelCountersEnabled;
         break;
         case Qt::Key_F3:
-        ((ReprojectiveStereoscopicRenderer*)renderer)->toggleLeftZPrepass();
-        break;
-        case Qt::Key_F4:
-        ((ReprojectiveStereoscopicRenderer*)renderer)->toggleRightZPrepass();
+        (renderer)->toggleZPrepass();
         break;
         default:
         break;

@@ -5,9 +5,6 @@ CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 {
     normalizedEyeSeparation = 1.0f;
 }
-void CanonicalStereoscopicRenderer::toggleLeftZPrepass() {
-     leftEyeZPrepass = !leftEyeZPrepass;
-}
 
 void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, float near, float far) {
 
@@ -42,9 +39,6 @@ void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, 
 }
 
 
-void CanonicalStereoscopicRenderer::toggleRightZPrepass() {
-    rightEyeZPrepass = !rightEyeZPrepass;
-}
 void CanonicalStereoscopicRenderer::setNormalizedEyeSeparation(float e) {
     e = e > 1.0f ? 1.0f : (e < 0.0f ? 0.01f : e);
     normalizedEyeSeparation = e;
@@ -54,7 +48,7 @@ float CanonicalStereoscopicRenderer::getNormalizedEyeSeparation() {
 }
 QString CanonicalStereoscopicRenderer::configTags() {
     std::stringstream ss;
-    ss << "CanonicalStereoscopicRenderer Renderer, Left Z Prepass " << (leftEyeZPrepass ? "true" : "false")  << ", Right Z Prepass " << (rightEyeZPrepass ? "true" : "false") ;
+    ss << "CanonicalStereoscopicRenderer Renderer, Z Prepass " << (zPrepass ? "true" : "false");
     return QString::fromStdString(ss.str());
 }
 
@@ -120,7 +114,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glDisable(GL_BLEND);
 
     //zprepass
-    if(rightEyeZPrepass) {
+    if(zPrepass) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LEQUAL);
 
@@ -156,7 +150,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
     //zprepass
-    if(rightEyeZPrepass) {
+    if(zPrepass) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LEQUAL);
 
@@ -207,8 +201,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
 
 void CanonicalStereoscopicRenderer::initialize(int w, int h) {
 
-    leftEyeZPrepass = false;
-    rightEyeZPrepass = false;
+    zPrepass = false;
     CanonicalMonoscopicRenderer::initialize();
     GL.glViewport( 0, 0,w,h );
     qDebug() << w << " " << h;

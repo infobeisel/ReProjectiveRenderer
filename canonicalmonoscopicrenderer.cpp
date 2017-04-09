@@ -14,6 +14,11 @@ void CanonicalMonoscopicRenderer::setProjectionMatrix(float fov,float aspect, fl
     projection.frustum(-nearWidth/2.0f, nearWidth/2.0f, -nearWidth / (aspect * 2.0f), nearWidth /(aspect * 2.0f), near, far);
 }
 
+void CanonicalMonoscopicRenderer::toggleZPrepass() {
+    zPrepass = !zPrepass;
+
+}
+
 void CanonicalMonoscopicRenderer::setViewMatrix(QMatrix4x4 v) {view = v;}
 void CanonicalMonoscopicRenderer::setCameraPosition(QVector3D p) {
     cameraPosition = p;
@@ -25,7 +30,7 @@ void CanonicalMonoscopicRenderer::setCameraOrientation(QQuaternion p) {
 }
 QString CanonicalMonoscopicRenderer::configTags() {
     std::stringstream ss;
-    ss << "CanonicalMonoscopicRenderer" ;
+    ss << "CanonicalMonoscopicRenderer" << " Z Prepass " << (zPrepass ? "true" : "false");
     return QString::fromStdString(ss.str());
 }
 void CanonicalMonoscopicRenderer::setNormalizedEyeSeparation(float e) {}
@@ -42,6 +47,23 @@ void CanonicalMonoscopicRenderer::draw(Scene* s) {
 
     view.setToIdentity();
     view.lookAt(cameraPosition,cameraPosition + forward,up);
+
+    //zprepass
+    if(zPrepass) {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LEQUAL);
+
+        zPrepassShaderProgram.bind();
+        s->bind(&zPrepassShaderProgram);
+        s->draw(&zPrepassShaderProgram,view,projection, OPAQUE);
+
+        shaderProgram.bind();
+        s->bind(&shaderProgram);
+    } else {
+        GL.glEnable(GL_DEPTH_TEST);
+        GL.glDepthFunc(GL_LESS);
+    }
+
 
     //first draw opaque, then transparent
     shaderProgram.setUniformValue("eyeIndex",0);

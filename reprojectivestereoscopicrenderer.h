@@ -20,8 +20,6 @@ public:
     void toggleDebugMode() override;
     QString configTags() override;
 
-    void toggleLeftZPrepass();
-    void toggleRightZPrepass();
 
     GLuint getRightImage();
     GLuint getLeftImage();
@@ -34,8 +32,7 @@ protected:
 
     float normalizedEyeSeparation;
 
-    bool leftEyeZPrepass;
-    bool rightEyeZPrepass;
+
     bool debugMode;
 
     //precompiled shader objects

@@ -18,6 +18,7 @@ public:
     void setCameraPosition(QVector3D p) override;
     void setCameraOrientation(QQuaternion q) override;
     QString configTags() override;
+    void toggleZPrepass() override;
 
 
 protected:
@@ -28,6 +29,7 @@ protected:
     QVector3D cameraPosition;
     QQuaternion cameraOrientation;
 
+    bool zPrepass;
     QOpenGLShaderProgram zPrepassShaderProgram;
 
 };

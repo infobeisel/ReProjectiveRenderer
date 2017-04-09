@@ -204,7 +204,6 @@ void main()
         leftEyeCameraSpaceDepth         = ( - p43 / (leftEyeCameraSpaceDepth + p33));
         float rightEyeCameraSpaceDepth  = ( - p43 / (gl_FragCoord.z + p33));
 
-
         //normalize
         leftEyeCameraSpaceDepth /= FarClippingPlane;
         rightEyeCameraSpaceDepth /= FarClippingPlane;
@@ -223,7 +222,15 @@ void main()
         if(dontReproject) {
             if(debugMode == 0)  color = vec4(0.0,0.0,0.0,0.0);
             else {
-                color = vec4(0.0,0.0,1.0,1.0);
+                if        (outsideViewFrustum) { // pink for unavailable pixels
+                                    color = vec4(1.0,0.0,0.8,1.0);
+                                } else if (reprojectableSpecular  == 0.0) { // if specular,blue
+                                    color = vec4(0.0,0.0,1.0,1.0);
+                                } else if (d  > depthThreshold) { //green for fragments that don't pass the depth comparison test
+                                    color = vec4(0.0,1.0,0.0,1.0); //d-t/t =
+                                } else if ((lodErr < LodError )) {// undersampled areas : yellow
+                                    color = vec4(1.0,1.0,0.0,1.0);
+                                }
             }
         } else {
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment

@@ -1,11 +1,8 @@
 #version 410 core
 
-#define HasStencilTexturingExt
 
 //forward declaration & constants
 float GetUnocclusionFactor(vec3 worldPosition);
-
-const float MY_GL_TEXTURE_MAX_LOD = 1000.0f;
 
 struct LightSource {
     vec3 ambient;
@@ -26,7 +23,6 @@ extern layout(location = 0 ) out vec4 color;
 extern layout(location = 1 ) out float exchangeBuffer;
 
 extern uniform int debugMode;
-extern uniform float NearClippingPlane;
 extern uniform float FarClippingPlane;
 
 
@@ -34,15 +30,14 @@ extern uniform float FarClippingPlane;
 extern uniform float SpecularError;
 extern uniform float LodError;
 extern uniform float depthThreshold; //threshold for discriminating occluded fragments from reusable fragments
-extern uniform float eyeSeparation; // in centimeters
 
 //Stereoscopic related
 extern uniform int eyeIndex;
 extern uniform vec3 rightCameraWorldPos;
 extern uniform mat4 P;
 extern uniform mat4 R; //the reprojection matrix
-extern uniform float width;
-extern uniform float height;
+extern uniform float height;extern uniform sampler2DArray bumpSampler;
+
 extern layout(location = 1) in vec4 clipSpacePos; //fragment in camera space coordinates
 extern uniform sampler2D exchangeBufferSampler;
 extern uniform sampler2D exchangeBuffer2Sampler;
@@ -56,10 +51,6 @@ extern uniform vec3 Ks;
 extern uniform float specularExponent;
 extern uniform float transparency;
 
-extern uniform mat3 NormalM;
-extern uniform mat4 MV;
-
-
 
 extern uniform int lightCount;
 extern uniform LightSource lights[];
@@ -67,7 +58,6 @@ extern uniform LightSource lights[];
 extern layout(location = 2) in vec2 interpolatedUV;
 extern layout(location = 3) in vec3 interpolatedNormal;
 extern layout(location = 0) in vec3 interpolatedPos;
-extern layout(location = 4) in vec3 interpolatedViewDir;
 //texture information: in which layer this fragment has to lookup the texture?
 extern uniform float diffuseTextureArrayIndex;
 extern uniform sampler2DArray diffuseSampler;
@@ -76,11 +66,6 @@ extern uniform sampler2DArray ambientSampler;
 extern uniform float specularTextureArrayIndex;
 extern uniform sampler2DArray specularSampler;
 extern uniform float bumpTextureArrayIndex;
-extern uniform sampler2DArray bumpSampler;
-
-
-
-
 
 
 
@@ -133,7 +118,6 @@ void fullRenderPass() {
         float NL = dot(n , l);
         //NL is negative -> do not contribute negative values
         if(NL > 0.0) {
-            //vec3 rl = reflect(l, n);
             //d−2(d⋅n)n
             vec3 rl = normalize ( -l - 2 * dot(-l , n) * n );
             float RLV = max(dot(rl,v),0.0);
@@ -203,7 +187,6 @@ void main()
 {
    if(transparency == 0.0 && eyeIndex == 1) { //transparent objects get always rerendered
         //perform reprojection
-
         vec4 clipSpacePosLeftEye = R * clipSpacePos; //NOT between -1 and 1 yet. divde by w.
         float uvSpaceLeftImageXCoord =   clipSpacePosLeftEye.x / clipSpacePosLeftEye.w; // between -1 and 1. NDC.
         uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
@@ -214,11 +197,8 @@ void main()
 
         //calculate depth difference
         float leftEyeCameraSpaceDepth = texture(exchangeBuffer2Sampler, vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))).r;
-        //linearize depth values
-        //float p12 = P[2][3];
-        //float p11 = - P[2][2];
-        //leftEyeCameraSpaceDepth         = - (p12 / ( leftEyeCameraSpaceDepth - p11));
-        //float rightEyeCameraSpaceDepth  = - (p12 / ( gl_FragCoord.z - p11));
+
+        //linearize depth value
         float p33 = P[2][2];
         float p43 = P[3][2];
         leftEyeCameraSpaceDepth         = ( - p43 / (leftEyeCameraSpaceDepth + p33));
@@ -231,36 +211,20 @@ void main()
 
         float d = abs( leftEyeCameraSpaceDepth - rightEyeCameraSpaceDepth); //normalized difference. leftEyeCameraSpaceDepth could be negative, absolute
 
-        //calculate if outside the view frustum
-        bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
-
         //calculate over/undersampling error
         float lodErr = max(dFdx(uvSpaceLeftImageXCoord),dFdy(uvSpaceLeftImageXCoord));
 
 
-        bool dontReproject =  (outsideViewFrustum
-                          || d  > depthThreshold
+        bool dontReproject =  (
+                          d  > depthThreshold
                           || reprojectableSpecular  == 0.0 //spec error too big, see in l. ~186
                           || (lodErr < LodError )                  );
         if(dontReproject) {
-            //write to exchange buffer that this fragment didnt get reprojected
-
-
-            if(debugMode == 0)  color = vec4(0.0,0.0,0.0,0.0);//fullRenderPass();//color = vec4(0.0,1.0,0.0,1.0);//
+            if(debugMode == 0)  color = vec4(0.0,0.0,0.0,0.0);
             else {
-               /*if        (outsideViewFrustum) { // pink for unavailable pixels
-                    color = vec4(1.0,0.0,0.8,1.0);
-                } else if (leftEyeCameraSpaceDepth < 0.0) { // if specular,blue
-                    color = vec4(0.0,0.0,1.0,1.0);
-                } else if (d  > depthThreshold) { //green for fragments that don't pass the depth comparison test
-                    color = vec4(0.0,1.0,0.0,1.0); //d-t/t =
-                } else if ((lodErr <  0.00025f)) {// undersampled areas : yellow
-                    color = vec4(1.0,1.0,0.0,1.0);
-                }*/
                 color = vec4(0.0,0.0,1.0,1.0);
             }
         } else {
-            //write to exchange buffer that this fragment did get reprojected
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment
         }
 

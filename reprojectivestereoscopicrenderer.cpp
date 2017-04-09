@@ -260,14 +260,30 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
+
+
     //blit framebuffer data to screen
     GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);
     GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
     //GLenum status = GL.glGetError();
     //qDebug() << status;
     GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-    GL.glBlitFramebuffer(0,0,w,h,
-                         0,0,w,h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    GL.glBlitFramebuffer(0,0,w,h/2,
+                         0,0,w,h/2, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
+
+    //blit framebuffer data to screen
+    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
+    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    //GLenum status = GL.glGetError();
+    //qDebug() << status;
+    GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
+    GL.glBlitFramebuffer(0,0,w,h/2,
+                         0,h/2,w,h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
+
+
+
 }
 
 void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {

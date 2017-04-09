@@ -213,9 +213,10 @@ void main()
 
         //calculate over/undersampling error
         float lodErr = max(dFdx(uvSpaceLeftImageXCoord),dFdy(uvSpaceLeftImageXCoord));
+        //calculate if outside the view frustum
+        bool outsideViewFrustum = uvSpaceLeftImageXCoord >= 1.0 || uvSpaceLeftImageXCoord <= 0.0f;
 
-
-        bool dontReproject =  (
+        bool dontReproject =  (outsideViewFrustum ||
                           d  > depthThreshold
                           || reprojectableSpecular  == 0.0 //spec error too big, see in l. ~186
                           || (lodErr < LodError )                  );

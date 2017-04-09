@@ -18,16 +18,13 @@ void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, 
                 far);       // far clipping plane
 
     //derive left and right eye projection matrices
-    leftProjection = projection;
-    rightProjection = projection;
+    leftProjection = QMatrix4x4();
+    rightProjection = QMatrix4x4();
+    projection.copyDataTo(leftProjection.data());
+    projection.copyDataTo(rightProjection.data());
     qreal radians = (fov / 2.0f) * M_PI / 180.0f;
-    qreal sine = qSin(radians);
-    qreal cotan = qCos(radians) / sine;
     float eyeSeparation = Configuration::instance().MaxEyeSeparation * normalizedEyeSeparation;
-    //  2n/r-l = cotan(fov) / aspect <=> r-l = 2aspect * n / cotan(fov)
-    float nearWidth =  (aspect * 2.0f * near) / cotan;
-    float r = nearWidth / 2.0f;
-    float l = -nearWidth / 2.0f;
+    float nearWidth = qSin(radians / 2.0f) * 2.0f * near;
 
     /*
      * set 2n/r-l and r+l/r-l
@@ -35,10 +32,10 @@ void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, 
      * */
     QVector4D firstRowLeft = leftProjection.row(0);
     QVector4D firstRowRight = rightProjection.row(0);
-    firstRowLeft.setX( 2.0f * near / ( r - l + eyeSeparation));
-    firstRowRight.setX(2.0f * near / ( r - l - eyeSeparation));
-    firstRowLeft.setZ( ( r + l ) / ( r - l + eyeSeparation));
-    firstRowRight.setZ(( r + l ) / ( r - l - eyeSeparation));
+    //firstRowLeft.setX( 2.0f * near / ( r - l + eyeSeparation));
+    //firstRowRight.setX(2.0f * near / ( r - l + eyeSeparation));
+    firstRowLeft.setZ( nearWidth * (( eyeSeparation) / ( 2.0f * near )));
+    firstRowRight.setZ( nearWidth * (( -eyeSeparation) / ( 2.0f * near )));
     leftProjection.setRow(0,firstRowLeft);
     rightProjection.setRow(0,firstRowRight);
 
@@ -185,14 +182,27 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
+
+
     //blit framebuffer data to screen
     GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);
     GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
     //GLenum status = GL.glGetError();
     //qDebug() << status;
     GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-    GL.glBlitFramebuffer(0,0,w,h,
-                         0,0,w,h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    GL.glBlitFramebuffer(0,0,w,h/2,
+                         0,0,w,h/2, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
+
+    //blit framebuffer data to screen
+    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
+    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+    //GLenum status = GL.glGetError();
+    //qDebug() << status;
+    GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
+    GL.glBlitFramebuffer(0,0,w,h/2,
+                         0,h/2,w,h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
 
 }
 

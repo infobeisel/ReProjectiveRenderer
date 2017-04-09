@@ -58,6 +58,40 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     viewRight.setToIdentity();
     viewRight.lookAt(cameraPosition + (right * eyeSeparation / 2.0f) , cameraPosition + (right * eyeSeparation / 2.0f) + forward,up);
 
+    //Reprojection matrix
+    QMatrix4x4 reprojection;
+    reprojection.setToIdentity();
+
+    //extract a_l,a_r,b_l,b_r,e,f,d, from projection matrices
+    QVector4D firstRowLeft = leftProjection.row(0);
+    QVector4D firstRowRight = rightProjection.row(0);
+    QVector4D thirdRow = projection.row(2);
+
+    float f = -1;
+    float d = thirdRow.z();
+    float e = thirdRow.w();
+    float a_l = firstRowLeft.x();
+    float a_r = firstRowRight.x();
+    float b_l = firstRowLeft.z();
+    float b_r = firstRowRight.z();
+
+    QVector4D firstRowR = QVector4D(
+                a_l/a_r,
+                0.0f,
+                - eyeSeparation * a_l / e,
+                (-a_l * b_r / (f * a_r)) + ((d * eyeSeparation * a_l) / (f * e)) + (b_l / f)
+                );
+    reprojection.setRow(0,firstRowR);
+    shaderProgram.setUniformValue( "R", reprojection );
+
+
+
+
+
+
+
+
+
     QVector3D originalCameraPosition = cameraPosition;
     QVector3D leftCameraPosition = originalCameraPosition - (right * eyeSeparation / 2.0f);
     QVector3D rightCameraPosition = originalCameraPosition + (right * eyeSeparation / 2.0f);
@@ -69,8 +103,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     //shaderProgram.setUniformValue( "depthDifThreshold", eyeSeparation );
     //qDebug() <<  eyeSeparation /  FarClippingPlane / 1000.0f;
     shaderProgram.setUniformValue( "depthThreshold",eyeSeparation / Configuration::instance().FarClippingPlane / 10.0f );
-    //set projection matrix (which is the same for both eyes)
-    shaderProgram.setUniformValue( "P", projection );
+
     shaderProgram.setUniformValue( "height", (float)h  );
     shaderProgram.setUniformValue( "width", (float)w );
     GL.glGetIntegerv(GL_VIEWPORT,viewport);
@@ -89,8 +122,11 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     setCameraPosition(leftCameraPosition);
     //set right camera position as well, used in fragment shader
     shaderProgram.setUniformValue("rightCameraWorldPos",rightCameraPosition);
+    //set projection matrix
+    shaderProgram.setUniformValue( "P", projection );
+    shaderProgram.setUniformValue( "leftP", leftProjection );
+    shaderProgram.setUniformValue( "rightP", rightProjection );
 
-    shaderProgram.setUniformValue( "V", viewLeft );
     //first draw opaque. store depth values in exchange buffer
     GL.glDisable(GL_BLEND);
     //zprepass
@@ -101,7 +137,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
         GL.glDrawBuffer(GL_NONE);
         zPrepassShaderProgram.bind();
         s->bind(&zPrepassShaderProgram);
-        s->draw(&zPrepassShaderProgram,viewLeft,projection, OPAQUE);
+        s->draw(&zPrepassShaderProgram,viewLeft,leftProjection, OPAQUE);
 
         shaderProgram.bind();
         s->bind(&shaderProgram);
@@ -110,7 +146,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
         GL.glEnable(GL_DEPTH_TEST);
         GL.glDepthFunc(GL_LESS);
     }
-    s->draw(&shaderProgram,viewLeft,projection, OPAQUE);
+    s->draw(&shaderProgram,viewLeft,leftProjection, OPAQUE);
 
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
@@ -136,6 +172,9 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
 
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
+    //set projection matrix
+    shaderProgram.setUniformValue( "P", rightProjection );
+
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,w,h );
     setCameraPosition(rightCameraPosition);
@@ -149,7 +188,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
         GL.glDrawBuffer(GL_NONE);
         zPrepassShaderProgram.bind();
         s->bind(&zPrepassShaderProgram);
-        s->draw(&zPrepassShaderProgram,viewRight,projection, OPAQUE);
+        s->draw(&zPrepassShaderProgram,viewRight,rightProjection, OPAQUE);
 
         shaderProgram.bind();
         s->bind(&shaderProgram);
@@ -160,7 +199,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     }
 
     //reproject fragments. if not reprojectable, give them color value (0,0,0,0)
-    s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+    s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
 
     //read color buffer, write into stencil buffer: 0 if color is (0,0,0,0), 1 else
     //-> color buffer gets copied into stencil buffer.
@@ -197,7 +236,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",0); //full render pass
 
     //full light calculation pass, but less costly because of early stencil test culling away a lot
-    s->draw(&shaderProgram,viewRight,projection, OPAQUE );
+    s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
     glDisable(GL_STENCIL_TEST);
 
     //transparent objects
@@ -206,10 +245,10 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",0);
     GL.glViewport( 0, 0,w,h );
     setCameraPosition(leftCameraPosition);
-    shaderProgram.setUniformValue( "V", viewLeft );
+    shaderProgram.setUniformValue( "P", leftProjection );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewLeft,projection, TRANSPARENT);
+    s->draw(&shaderProgram,viewLeft,leftProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
@@ -217,10 +256,10 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("eyeIndex",1);
     GL.glViewport( 0, 0,w,h );
     setCameraPosition(rightCameraPosition);
-    shaderProgram.setUniformValue( "V", viewRight );
+    shaderProgram.setUniformValue( "P", rightProjection );
     GL.glEnable(GL_BLEND);
     GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewRight,projection, TRANSPARENT);
+    s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
     GL.glDisable(GL_BLEND);
 
     //blit framebuffer data to screen

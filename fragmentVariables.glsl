@@ -36,10 +36,12 @@ uniform int eyeIndex;
 uniform float eyeSeparation; // in centimeters
 uniform vec3 rightCameraWorldPos; //for light calculations
 uniform mat4 P; //
+uniform mat4 leftP;
+uniform mat4 rightP;
 uniform mat4 R; //the reprojection matrix
 uniform float width;
 uniform float height;
-layout(location = 1) in vec4 cameraSpacePos; //fragment in camera space coordinates
+layout(location = 1) in vec4 clipSpacePos; //fragment in camera space coordinates
 uniform sampler2D exchangeBufferSampler;
 uniform sampler2D exchangeBuffer2Sampler;
 uniform sampler2D leftImageSampler;

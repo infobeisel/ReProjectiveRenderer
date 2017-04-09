@@ -40,6 +40,8 @@ extern uniform float eyeSeparation; // in centimeters
 extern uniform int eyeIndex;
 extern uniform vec3 rightCameraWorldPos;
 extern uniform mat4 P;
+extern uniform mat4 leftP;
+extern uniform mat4 rightP;
 extern uniform mat4 R; //the reprojection matrix
 extern uniform float width;
 extern uniform float height;
@@ -206,7 +208,7 @@ void main()
         //right camera space position + translation resulting from eye separation = left camera space position
         vec4 leftCameraSpacePos = cameraSpacePos + vec4(eyeSeparation ,0.0,0.0,1.0);
         //projection * left camera space position = Clip coordinates
-        vec4 clipSpacePosLeftEye = P * leftCameraSpacePos; //NOT between -1 and 1 yet. divde by w.
+        vec4 clipSpacePosLeftEye = leftP * leftCameraSpacePos; //NOT between -1 and 1 yet. divde by w.
         float uvSpaceLeftImageXCoord =   clipSpacePosLeftEye.x / clipSpacePosLeftEye.w; // between -1 and 1. NDC.
         uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
         uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image

@@ -33,7 +33,7 @@ private:
    // QElapsedTimer timer;
     bool leftEyeZPrepass;
     bool rightEyeZPrepass;
-
+protected:
     QMatrix4x4 leftProjection;
     QMatrix4x4 rightProjection;
 

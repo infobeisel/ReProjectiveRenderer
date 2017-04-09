@@ -190,7 +190,6 @@ void CanonicalGLWindowImpl::paintGL() {
 
     //trigger an update so that this function gets called the next frame again
     QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest));
-    QCoreApplication::postEvent(this, new QEvent(QEvent::GrabKeyboard));
 
     //qDebug() << (1000.0f / (float)timer.elapsed());
         //register update

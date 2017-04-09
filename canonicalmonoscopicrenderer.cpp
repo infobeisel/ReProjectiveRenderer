@@ -1,16 +1,17 @@
 #include "canonicalmonoscopicrenderer.h"
 #include <QFile>
 #include "configuration.h"
+#include <QtCore/qmath.h>
+
 CanonicalMonoscopicRenderer::CanonicalMonoscopicRenderer()
 {
 }
 void CanonicalMonoscopicRenderer::setProjectionMatrix(float fov,float aspect, float near, float far) {
     projection.setToIdentity();
-    projection.perspective(
-                fov,          // field of vision
-                aspect,         // aspect ratio
-                near,           // near clipping plane
-                far);       // far clipping plane
+    qreal radians = (fov ) * M_PI / 180.0f;
+    float nearWidth =  qTan(radians / 2.0f) * 2.0f * near;
+
+    projection.frustum(-nearWidth/2.0f, nearWidth/2.0f, -nearWidth / (aspect * 2.0f), nearWidth /(aspect * 2.0f), near, far);
 }
 
 void CanonicalMonoscopicRenderer::setViewMatrix(QMatrix4x4 v) {view = v;}

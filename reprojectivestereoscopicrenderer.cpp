@@ -78,8 +78,8 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     QVector4D firstRowR = QVector4D(
                 a_l/a_r,
                 0.0f,
-                - eyeSeparation * a_l / e,
-                (-a_l * b_r / (f * a_r)) + ((d * eyeSeparation * a_l) / (f * e)) + (b_l / f)
+                 eyeSeparation * a_l / e,
+                (-a_l * b_r / (f * a_r)) - ((d * eyeSeparation * a_l) / (f * e)) + (b_l / f)
                 );
     reprojection.setRow(0,firstRowR);
     shaderProgram.setUniformValue( "R", reprojection );
@@ -124,8 +124,6 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue("rightCameraWorldPos",rightCameraPosition);
     //set projection matrix
     shaderProgram.setUniformValue( "P", projection );
-    shaderProgram.setUniformValue( "leftP", leftProjection );
-    shaderProgram.setUniformValue( "rightP", rightProjection );
 
     //first draw opaque. store depth values in exchange buffer
     GL.glDisable(GL_BLEND);

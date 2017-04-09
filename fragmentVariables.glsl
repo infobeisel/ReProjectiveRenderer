@@ -36,8 +36,6 @@ uniform int eyeIndex;
 uniform float eyeSeparation; // in centimeters
 uniform vec3 rightCameraWorldPos; //for light calculations
 uniform mat4 P; //
-uniform mat4 leftP;
-uniform mat4 rightP;
 uniform mat4 R; //the reprojection matrix
 uniform float width;
 uniform float height;

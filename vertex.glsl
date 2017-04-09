@@ -12,13 +12,13 @@ uniform mat4 VP;
 uniform mat3 NormalM;
 
 layout(location = 0) out vec3 interpolatedPos;
-layout(location = 1) out vec4 cameraSpacePos;
+layout(location = 1) out vec4 clipSpacePos;
 layout(location = 2) out vec2 interpolatedUV;
 layout(location = 3) out vec3 interpolatedNormal;
 layout(location = 4) out vec3 interpolatedViewDir;
 void main() {
     gl_Position = MVP * vec4(position,1.0);
-    cameraSpacePos = MV * vec4(position,1.0);
+    clipSpacePos = gl_Position;
     interpolatedPos = vec3(M * vec4(position,1.0));
 
     interpolatedUV = uv;

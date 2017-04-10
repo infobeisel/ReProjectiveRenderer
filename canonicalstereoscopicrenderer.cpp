@@ -18,12 +18,12 @@ void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, 
 
     projection.frustum(-nearWidth/2.0f, nearWidth/2.0f, -nearWidth / (aspect * 2.0f), nearWidth /(aspect * 2.0f), near, far);
 
+
     //derive left and right eye projection matrices
     leftProjection = QMatrix4x4();
     rightProjection = QMatrix4x4();
-    projection.copyDataTo(leftProjection.data());
-    projection.copyDataTo(rightProjection.data());
-
+    projection.transposed().copyDataTo(leftProjection.data());
+    projection.transposed().copyDataTo(rightProjection.data());
     /*
      * set 2n/r-l and r+l/r-l
      *

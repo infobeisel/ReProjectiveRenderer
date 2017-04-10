@@ -55,7 +55,8 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     QMatrix4x4 reprojection;
     reprojection.setToIdentity();
 
-    //reprojection = leftProjection * viewLeft * viewRight.inverted() * rightProjection.inverted();
+    //bool inv = true;
+    //reprojection = leftProjection * viewLeft * viewRight.inverted(&inv) * rightProjection.inverted(&inv);
 
     //extract a_l,a_r,b_l,b_r,e,f,d, from projection matrices
     QVector4D firstRowLeft = leftProjection.row(0);
@@ -72,12 +73,11 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     QVector4D firstRowR = QVector4D(
                 1.0,
                 0.0f,
-                 eyeSeparation * a / e,
-                (-b_r / f ) - ((d * eyeSeparation * a) / (f * e)) + (b_l / f)
+                 eyeSeparation * a  / e,
+                ( (-b_r) / f ) - (( d * eyeSeparation * a) / (f * e)) + ( b_l / f)
                 );
     reprojection.setRow(0,firstRowR);
     shaderProgram.setUniformValue( "R", reprojection );
-
 
 
 

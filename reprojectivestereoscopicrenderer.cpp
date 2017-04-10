@@ -3,6 +3,7 @@
 #include "configuration.h"
 ReprojectiveStereoscopicRenderer::ReprojectiveStereoscopicRenderer()
 {
+    debugMode = true;
     normalizedEyeSeparation = 1.0f;
 }
 
@@ -26,13 +27,6 @@ QString ReprojectiveStereoscopicRenderer::configTags() {
 }
 
 
-void ReprojectiveStereoscopicRenderer::toggleDebugMode() {
-    GLint l = GL.glGetUniformLocation( 	shaderProgram.programId(),"debugMode");
-    int value = -1;
-    GL.glGetUniformiv(shaderProgram.programId(),l,&value);
-    shaderProgram.setUniformValue( "debugMode", value == 1 ? 0 : 1 );
-    debugMode = value == 1 ? false : true;
-}
 
 void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GLint viewport[4] = {
@@ -111,7 +105,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
     setCameraPosition(leftCameraPosition);
     //set right camera position as well, used in fragment shader
     shaderProgram.setUniformValue("rightCameraWorldPos",rightCameraPosition);
@@ -167,7 +161,8 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "P", rightProjection );
 
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -234,7 +229,8 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",0);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+
     setCameraPosition(leftCameraPosition);
     shaderProgram.setUniformValue( "P", leftProjection );
     GL.glEnable(GL_BLEND);
@@ -245,7 +241,8 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "P", rightProjection );
     GL.glEnable(GL_BLEND);
@@ -262,20 +259,22 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     //GLenum status = GL.glGetError();
     //qDebug() << status;
     GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-    GL.glBlitFramebuffer(0,0,w,h/2,
-    0,0,w,h/2, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    //GL.glBlitFramebuffer(0,0,w,h/2,
+    //0,0,w,h/2, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    GL.glBlitFramebuffer(0,0,w,debugMode ? h/2 : h,
+    0,0,w,debugMode ? h/2 : h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
 
+    if(debugMode) {
 
-
-    //blit framebuffer data to screen
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
-    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
-    //GLenum status = GL.glGetError();
-    //qDebug() << status;
-    GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
-    GL.glBlitFramebuffer(0,0  ,w,h/2,
-    0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
-
+        //blit framebuffer data to screen
+        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
+        GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+        //GLenum status = GL.glGetError();
+        //qDebug() << status;
+        GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
+        GL.glBlitFramebuffer(0,0  ,w,h/2,
+        0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    }
 }
 
 void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {

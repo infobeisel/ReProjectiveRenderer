@@ -17,7 +17,6 @@ public:
 
     void setNormalizedEyeSeparation(float e) override;
     float getNormalizedEyeSeparation() override;
-    void toggleDebugMode() override;
     QString configTags() override;
 
 
@@ -33,7 +32,6 @@ protected:
     float normalizedEyeSeparation;
 
 
-    bool debugMode;
 
     //precompiled shader objects
     QOpenGLShader* fullRenderOnly;

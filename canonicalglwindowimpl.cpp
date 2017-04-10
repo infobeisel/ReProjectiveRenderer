@@ -293,6 +293,7 @@ void CanonicalGLWindowImpl::keyReleaseEvent(QKeyEvent *ev) {
         case Qt::Key_F1:
         renderer->toggleDebugMode();
         rerenderNonReprojectedPixels = !rerenderNonReprojectedPixels;
+        renderer->setProjectionMatrix(Configuration::instance().FoV, (float)width()/(float)height(), Configuration::instance().NearClippingPlane, Configuration::instance().FarClippingPlane);
         break;
         case Qt::Key_F2:
         pixelCountersEnabled = !pixelCountersEnabled;

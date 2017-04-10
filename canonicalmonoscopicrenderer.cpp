@@ -150,7 +150,7 @@ void CanonicalMonoscopicRenderer::initialize() {
                 QVector3D(0.0f, 1.0f, 0.0f));   // Up vector
 
 
-    setProjectionMatrix(Configuration::instance().FoV, 4.0f/3.0f, Configuration::instance().NearClippingPlane, Configuration::instance().FarClippingPlane);
+    //setProjectionMatrix(Configuration::instance().FoV, 4.0f/3.0f, Configuration::instance().NearClippingPlane, Configuration::instance().FarClippingPlane);
 
 
     //will be modified later

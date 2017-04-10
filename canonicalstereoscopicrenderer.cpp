@@ -3,6 +3,7 @@
 #include <QtCore/qmath.h>
 CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 {
+    debugMode = true;
     normalizedEyeSeparation = 1.0f;
 }
 
@@ -11,7 +12,8 @@ void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, 
     projection = QMatrix4x4();
     projection.setToIdentity();
 
-    aspect *= 2.0f; //only for up & down view
+    if(debugMode)
+        aspect *= 2.0f; //only for up & down view
 
     qreal radians = (fov ) * M_PI / 180.0f;
     float eyeSeparation = Configuration::instance().MaxEyeSeparation * normalizedEyeSeparation;
@@ -112,7 +114,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
     setCameraPosition(leftCameraPosition);
     shaderProgram.setUniformValue( "V", viewLeft );
 
@@ -150,7 +152,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     //draw right eye
     //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
     shaderProgram.setUniformValue("eyeIndex",0);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -180,7 +182,7 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     GL.glDisable(GL_BLEND);
 
 
-    GL.glViewport( 0, 0,w,2 *h );
+    GL.glViewport( 0, 0,w, h );
 
     //blit framebuffer data to screen
     GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);
@@ -188,27 +190,40 @@ void CanonicalStereoscopicRenderer::draw(Scene* s) {
     //GLenum status = GL.glGetError();
     //qDebug() << status;
     GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-    GL.glBlitFramebuffer(0,0,w,h/2,
-    0,0,w,h/2, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+    GL.glBlitFramebuffer(0,0,w,debugMode ? h/2 : h,
+    0,0,w,debugMode ? h/2 : h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
 
+    if(debugMode) {
+        //blit framebuffer data to screen
+        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
+        GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+        //GLenum status = GL.glGetError();
+        //qDebug() << status;
+        GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
+        GL.glBlitFramebuffer(0,0  ,w,h/2,
+        0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
 
-    //blit framebuffer data to screen
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
-    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
-    //GLenum status = GL.glGetError();
-    //qDebug() << status;
-    GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
-    GL.glBlitFramebuffer(0,0  ,w,h/2,
-    0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
-
-
+    }
 
 }
 
+void CanonicalStereoscopicRenderer::toggleDebugMode() {
+    GLint l = GL.glGetUniformLocation( 	shaderProgram.programId(),"debugMode");
+    int value = -1;
+    GL.glGetUniformiv(shaderProgram.programId(),l,&value);
+    shaderProgram.setUniformValue( "debugMode", value == 1 ? 0 : 1 );
+    debugMode = value == 1 ? false : true;
+}
 void CanonicalStereoscopicRenderer::initialize(int w, int h) {
 
-    zPrepass = false;
+
     CanonicalMonoscopicRenderer::initialize();
+
+    shaderProgram.setUniformValue("debugMode",1);
+    debugMode = true;
+
+    zPrepass = false;
+
     GL.glViewport( 0, 0,w,h );
     qDebug() << w << " " << h;
     //if the framebuffers got initialized already, deallocate the memory

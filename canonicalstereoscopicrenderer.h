@@ -17,6 +17,7 @@ public:
     float getNormalizedEyeSeparation() override;
     QString configTags() override;
     void setProjectionMatrix(float fov,float aspect, float near, float far) override;
+    void toggleDebugMode() override;
 
 private:
     enum {Color, Exchange, Depth ,NumRenderbuffers};
@@ -32,6 +33,7 @@ protected:
     QMatrix4x4 leftProjection;
     QMatrix4x4 rightProjection;
     QMatrix4x4 orthoProjection;
+    bool debugMode;
 
 
 };

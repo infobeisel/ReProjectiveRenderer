@@ -31,6 +31,7 @@ private:
 protected:
     QMatrix4x4 leftProjection;
     QMatrix4x4 rightProjection;
+    QMatrix4x4 orthoProjection;
 
 
 };

@@ -55,7 +55,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     QMatrix4x4 reprojection;
     reprojection.setToIdentity();
 
-    //bool inv = true;
+    bool inv = true;
     //reprojection = leftProjection * viewLeft * viewRight.inverted(&inv) * rightProjection.inverted(&inv);
 
     //extract a_l,a_r,b_l,b_r,e,f,d, from projection matrices

@@ -192,6 +192,7 @@ void main()
         uvSpaceLeftImageXCoord += 1.0f ; // between 0 and 2
         uvSpaceLeftImageXCoord *= 0.5f; // between 0 and 1 (if in viewport). is now the x coordinate of this fragment on the left camera image
 
+
         vec4 exchangeBufferData = texture(exchangeBufferSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample depth value
         float reprojectableSpecular = exchangeBufferData.r;
 

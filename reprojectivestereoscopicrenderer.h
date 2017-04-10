@@ -43,6 +43,8 @@ protected:
     QOpenGLShaderProgram copyColorBufToStencilBuf;
     Scene* plane;
 
+
+
 };
 
 

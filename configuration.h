@@ -31,7 +31,7 @@ public:
 
     void load(QString path) {
 
-        qDebug() << "load config file";
+        qDebug() << "load config file: " <<path;
         std::ifstream in(path.toStdString());
         std::string contents((std::istreambuf_iterator<char>(in)),
             std::istreambuf_iterator<char>());

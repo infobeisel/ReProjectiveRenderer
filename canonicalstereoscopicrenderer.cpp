@@ -8,6 +8,7 @@ CanonicalStereoscopicRenderer::CanonicalStereoscopicRenderer()
 
 void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, float near, float far) {
 
+    projection = QMatrix4x4();
     projection.setToIdentity();
 
     aspect *= 2.0f; //only for up & down view
@@ -18,24 +19,29 @@ void CanonicalStereoscopicRenderer::setProjectionMatrix(float fov,float aspect, 
 
     projection.frustum(-nearWidth/2.0f, nearWidth/2.0f, -nearWidth / (aspect * 2.0f), nearWidth /(aspect * 2.0f), near, far);
 
+    orthoProjection = QMatrix4x4();
+    orthoProjection.setToIdentity();
+    orthoProjection.ortho(-nearWidth/2.0f, nearWidth/2.0f, -nearWidth / (aspect * 2.0f), nearWidth /(aspect * 2.0f), near, far);
+
 
     //derive left and right eye projection matrices
     leftProjection = QMatrix4x4();
     rightProjection = QMatrix4x4();
-    projection.transposed().copyDataTo(leftProjection.data());
-    projection.transposed().copyDataTo(rightProjection.data());
+    leftProjection = projection;
+    rightProjection = projection;
+
     /*
      * set 2n/r-l and r+l/r-l
      *
      * */
     QVector4D firstRowLeft = leftProjection.row(0);
     QVector4D firstRowRight = rightProjection.row(0);
-    firstRowLeft.setZ(  - eyeSeparation /  nearWidth);
-    firstRowRight.setZ(   eyeSeparation / nearWidth);
+    firstRowLeft.setZ(   eyeSeparation /  nearWidth);
+    firstRowRight.setZ(   -eyeSeparation / nearWidth);
     leftProjection.setRow(0,firstRowLeft);
     rightProjection.setRow(0,firstRowRight);
 
-
+    qDebug() << "near plane width: " << nearWidth ;
 }
 
 

@@ -177,7 +177,7 @@ void CanonicalGLWindowImpl::paintGL() {
 
     }
 
-    /*int msToWait = (LOCK_FPS_MS - timer.elapsed()) < 0 ? 0 :(LOCK_FPS_MS - timer.elapsed())  ;
+   /* int msToWait = (50 - timer.elapsed()) < 0 ? 0 :(50 - timer.elapsed())  ;
     #ifdef Q_OS_WIN
         Sleep(uint(msToWait));
     #else

@@ -4,6 +4,11 @@
 #include <fstream>
 #include <sstream>
 #include <QString>
+#include <QCoreApplication>
+#include <QFile>
+#include <QTextStream>
+#include <QtCore/qmath.h>
+#include <QDir>
 
 class Configuration
 {
@@ -79,6 +84,33 @@ public:
             }
 
         }
+
+        //adjust plane resource for clipping planes (omg)
+
+        qreal radians = (FoV ) * M_PI / 180.0f;
+        float nearWidth =  qTan(radians / 2.0f) * 2.0f * NearClippingPlane;
+        QString nearWidthStr = QString::number(nearWidth + 0.001);
+        QString near = QString::number(NearClippingPlane + 0.001);
+        QString fullfile = QDir::currentPath().append("/plane.obj");
+        QFile data( fullfile);
+        if (data.open(QFile::WriteOnly | QFile::Truncate)) {
+            QTextStream out(&data);
+            out <<
+            "# Blender v2.76 (sub 0) OBJ File: '' " << '\n' <<
+            "# www.blender.org " << '\n' <<
+            "o Plane.003 " << '\n' <<
+            "v " << nearWidthStr  << " " << nearWidthStr  << " -" << near  << '\n' <<
+            "v -" << nearWidthStr  << " " << nearWidthStr  << " -" << near  << '\n' <<
+            "v -" << nearWidthStr  << " -" << nearWidthStr  << " -" << near  << '\n' <<
+            "v " << nearWidthStr  << " -" << nearWidthStr  << " -" << near  << '\n' <<
+            "vn 0.000000 0.000000 1.000000 " << '\n' <<
+            "s 1 " << '\n' <<
+            "f 1//1 2//1 3//1 4//1 " << '\n' ;
+
+        }
+        data.close();
+
+
     }
 
 

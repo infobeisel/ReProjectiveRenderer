@@ -311,7 +311,7 @@ void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
     }
     copyColorBufToStencilBuf.bind();
 
-    plane = new Scene("plane/plane.fbx");
+    plane = new Scene(QDir::currentPath().append("/plane.obj"));
     plane->load(&copyColorBufToStencilBuf);
     plane->bind(&copyColorBufToStencilBuf);
 

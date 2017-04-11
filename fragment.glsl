@@ -232,6 +232,7 @@ void main()
                                 } else if ((lodErr < LodError )) {// undersampled areas : yellow
                                     color = vec4(1.0,1.0,0.0,1.0);
                                 }
+                color = vec4(0.0,0.0,1.0,1.0);
             }
         } else {
             color = texture(leftImageSampler,vec2(uvSpaceLeftImageXCoord ,(gl_FragCoord.y / height))); // sample the reprojected fragment

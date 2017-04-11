@@ -33,7 +33,8 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     QMatrix4x4 reprojection;
     reprojection.setToIdentity();
 
-    //reprojection = leftProjection * viewLeft * viewRight.inverted() * rightProjection.inverted();
+    bool inv = true;
+    //reprojection = leftProjection * viewLeft * viewRight.inverted(&inv) * rightProjection.inverted(&inv);
 
     //extract a_l,a_r,b_l,b_r,e,f,d, from projection matrices
     QVector4D firstRowLeft = leftProjection.row(0);
@@ -50,12 +51,11 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     QVector4D firstRowR = QVector4D(
                 1.0,
                 0.0f,
-                 eyeSeparation * a / e,
-                (-b_r / f ) - ((d * eyeSeparation * a) / (f * e)) + (b_l / f)
+                 eyeSeparation * a  / e,
+                ( (-b_r) / f ) - (( d * eyeSeparation * a) / (f * e)) + ( b_l / f)
                 );
     reprojection.setRow(0,firstRowR);
     shaderProgram.setUniformValue( "R", reprojection );
-
 
 
 
@@ -89,7 +89,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
     setCameraPosition(leftCameraPosition);
     //set right camera position as well, used in fragment shader
     shaderProgram.setUniformValue("rightCameraWorldPos",rightCameraPosition);
@@ -145,7 +145,8 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "P", rightProjection );
 
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
     GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -212,7 +213,8 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",0);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+
     setCameraPosition(leftCameraPosition);
     shaderProgram.setUniformValue( "P", leftProjection );
     GL.glEnable(GL_BLEND);
@@ -223,7 +225,8 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,h/2 );
+    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "P", rightProjection );
     GL.glEnable(GL_BLEND);
@@ -232,66 +235,77 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     GL.glDisable(GL_BLEND);
 
 
-    //again right eye, but in left buffer
 
-    GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //right
-    //draw to attachments
-    GL.glDrawBuffers(2,drawBufs);
-    GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    //draw right eye
-    //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
-    shaderProgram.setUniformValue("eyeIndex",0);
-    GL.glViewport( 0, 0,w,h/2 );
-    setCameraPosition(rightCameraPosition);
-    shaderProgram.setUniformValue( "V", viewRight );
-    GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
-    //zprepass
-    if(zPrepass) {
-        GL.glEnable(GL_DEPTH_TEST);
-        GL.glDepthFunc(GL_LEQUAL);
 
-        GL.glDrawBuffer(GL_NONE);
-        zPrepassShaderProgram.bind();
-        s->bind(&zPrepassShaderProgram);
-        s->draw(&zPrepassShaderProgram,viewRight,rightProjection, OPAQUE);
 
-        shaderProgram.bind();
-        s->bind(&shaderProgram);
+    //now draw right again, but on the left image
+        GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //right
+        //draw to attachments
         GL.glDrawBuffers(2,drawBufs);
-    } else {
-        GL.glEnable(GL_DEPTH_TEST);
-        GL.glDepthFunc(GL_LESS);
-    }
+        GL.glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
-    GL.glEnable(GL_BLEND);
-    GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
-    GL.glDisable(GL_BLEND);
+        //draw right eye
+        //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
+        shaderProgram.setUniformValue("eyeIndex",0);
+        GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+
+        setCameraPosition(rightCameraPosition);
+        shaderProgram.setUniformValue( "V", viewRight );
+        GL.glClear(  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+
+        //zprepass
+        if(zPrepass) {
+            GL.glEnable(GL_DEPTH_TEST);
+            GL.glDepthFunc(GL_LEQUAL);
+
+            GL.glDrawBuffer(GL_NONE);
+            zPrepassShaderProgram.bind();
+            s->bind(&zPrepassShaderProgram);
+            s->draw(&zPrepassShaderProgram,viewRight,rightProjection, OPAQUE);
+
+            shaderProgram.bind();
+            s->bind(&shaderProgram);
+            GL.glDrawBuffers(2,drawBufs);
+        } else {
+            GL.glEnable(GL_DEPTH_TEST);
+            GL.glDepthFunc(GL_LESS);
+        }
 
 
-    GL.glViewport( 0, 0,w,2 *h );
-
-    //blit framebuffer data to screen
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);
-    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
-    //GLenum status = GL.glGetError();
-    //qDebug() << status;
-    GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-    GL.glBlitFramebuffer(0,0,w,h/2,
-    0,0,w,h/2, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+        s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
+        GL.glEnable(GL_BLEND);
+        GL.glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        s->draw(&shaderProgram,viewRight,rightProjection, TRANSPARENT);
+        GL.glDisable(GL_BLEND);
 
 
-    //blit framebuffer data to screen
-    GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
-    GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
-    //GLenum status = GL.glGetError();
-    //qDebug() << status;
-    GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//left camera
-    GL.glBlitFramebuffer(0,0  ,w,h/2,
-    0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
+        if(debugMode) {
+            GL.glViewport( 0, 0,w, h );
+
+            //blit framebuffer data to screen
+            GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
+            GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+            //GLenum status = GL.glGetError();
+            //qDebug() << status;
+            GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
+            GL.glBlitFramebuffer(0,0  ,w,h/2,
+            0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
+        }
+
+        //blit framebuffer data to screen
+            GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);
+            GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+            //GLenum status = GL.glGetError();
+            //qDebug() << status;
+            GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
+            GL.glBlitFramebuffer(0,0,w,debugMode ? h/2 : h,
+            0,0,w,debugMode ? h/2 : h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+
+
 
 }
 

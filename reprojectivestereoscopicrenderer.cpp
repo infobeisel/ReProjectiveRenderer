@@ -278,7 +278,7 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
 }
 
 void ReprojectiveStereoscopicRenderer::initialize(int w, int h) {
-    CanonicalMonoscopicRenderer::initialize();
+    CanonicalStereoscopicRenderer::initialize(w,h);
     shaderProgram.setUniformValue("debugMode",1);
     debugMode = true;
     zPrepass = false;

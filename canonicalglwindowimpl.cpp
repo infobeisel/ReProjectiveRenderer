@@ -132,6 +132,11 @@ void CanonicalGLWindowImpl::paintGL() {
             cameraAnimationTimeLogger.flush("frametimelog " + renderer->configTags());
             pixelCountLogger.flush("reprojectedPixelCountlog " + renderer->configTags());
             pixelCounter.saveReadImage("image");
+            GLuint reprojectedImage = ((ReprojectiveStereoscopicRenderer*)renderer)->getLeftImage();
+            pixelCounter.subtractGLTexture(reprojectedImage);
+            //pixelCounter.readFromGLTexture(reprojectedImage);
+            pixelCounter.saveReadImage("image2");
+
         }
     }
 
@@ -152,15 +157,27 @@ void CanonicalGLWindowImpl::paintGL() {
             pixelCounter.readFromGLTexture(reprojectedImage);
             if(rerenderNonReprojectedPixels) { //if they are rerendered measure the reprojection errror,
                 GLuint leftImage = ((ReprojectiveStereoscopicRenderer*)renderer)->getLeftImage();
-                pixelCounter.subtractGLTexture(leftImage);
-                float error = 1.0f - pixelCounter.countPixelsWithColorFraction(QColor(0,0,0,0));
-                pixelCountLogger.addValue(error);
+                //pixelCounter.subtractGLTexture(leftImage);
+                //float error = 1.0f - pixelCounter.countPixelsWithColorFraction(QColor(0,0,0,0));
+                //pixelCountLogger.addValue(error);
+                float ssd = pixelCounter.calculateSSDToGLTexture(leftImage);
+                pixelCountLogger.addValue(ssd);
+
             } else { //count pixels which would be rerendered
-                pixelCountLogger.addValue(pixelCounter.countPixelsWithColorFraction(QColor(0,0,255,255)));
+                pixelCountLogger.addValue(pixelCounter.countPixelsWithColorFraction(QColor(0,255,0,255)));
             }
 
         }
     }
+
+     int msToWait = (1 - timer.elapsed()) < 0 ? 0 :(1 - timer.elapsed())  ;
+     #ifdef Q_OS_WIN
+         Sleep(uint(msToWait));
+     #else
+         struct timespec ts = { msToWait / 1000, (msToWait % 1000) * 1000 * 1000 };
+         nanosleep(&ts, NULL);
+     #endif
+
 
     auto fps = (int)(1000.0f / ( (float)timer.elapsed() + 0.0001f));
     if(camTour->isValid() && t > 0.0f && t < 1.0f) {
@@ -177,13 +194,7 @@ void CanonicalGLWindowImpl::paintGL() {
 
     }
 
-   /* int msToWait = (50 - timer.elapsed()) < 0 ? 0 :(50 - timer.elapsed())  ;
-    #ifdef Q_OS_WIN
-        Sleep(uint(msToWait));
-    #else
-        struct timespec ts = { msToWait / 1000, (msToWait % 1000) * 1000 * 1000 };
-        nanosleep(&ts, NULL);
-    #endif*/
+
 
     timer = QElapsedTimer();
     timer.start();

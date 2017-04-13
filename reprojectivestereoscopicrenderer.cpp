@@ -220,7 +220,6 @@ void ReprojectiveStereoscopicRenderer::draw(Scene* s) {
     GL.glStencilFunc(GL_EQUAL, 0, 0xFF); //draw where stencil is 1
     GL.glDepthFunc(GL_LEQUAL); //render pass in l.162 fills the depth buffer, so need less equal now.
     shaderProgram.setUniformValue("eyeIndex",0); //full render pass
-
     //full light calculation pass, but less costly because of early stencil test culling away a lot
     if(!debugMode) s->draw(&shaderProgram,viewRight,rightProjection, OPAQUE );
     glDisable(GL_STENCIL_TEST);

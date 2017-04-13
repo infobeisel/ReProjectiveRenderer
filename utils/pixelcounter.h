@@ -9,6 +9,7 @@ public:
     PixelCounter();
     void readFromGLTexture(GLuint texture);
     void subtractGLTexture(GLuint texture);
+    float calculateSSDToGLTexture(GLuint texture);
     int countPixelsWithColor(QColor c); //counts absolute pixels with given color in the loaded image
     float countPixelsWithColorFraction(QColor c); // counts fraction of pixels which have given color, compared to the total pixel count
     void saveReadImage(QString pathWithoutImageFormat); //save the last read image

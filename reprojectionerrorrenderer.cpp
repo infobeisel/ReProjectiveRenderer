@@ -89,7 +89,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     //draw left eye
     shaderProgram.setUniformValue("eyeIndex",0);
     shaderProgram.setUniformValue("eyeSeparation",eyeSeparation);
-    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+    GL.glViewport( 0, 0,w,h );
     setCameraPosition(leftCameraPosition);
     //set right camera position as well, used in fragment shader
     shaderProgram.setUniformValue("rightCameraWorldPos",rightCameraPosition);
@@ -145,7 +145,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     shaderProgram.setUniformValue( "P", rightProjection );
 
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+    GL.glViewport( 0, 0,w,h );
 
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "V", viewRight );
@@ -213,7 +213,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[0]); //left
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",0);
-    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+    GL.glViewport( 0, 0,w,h );
 
     setCameraPosition(leftCameraPosition);
     shaderProgram.setUniformValue( "P", leftProjection );
@@ -225,7 +225,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
     GL.glBindFramebuffer(GL_FRAMEBUFFER,fbos[1]); //right
     GL.glDrawBuffers(3,drawBufs);
     shaderProgram.setUniformValue("eyeIndex",1);
-    GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+    GL.glViewport( 0, 0,w,h );
 
     setCameraPosition(rightCameraPosition);
     shaderProgram.setUniformValue( "P", rightProjection );
@@ -249,7 +249,7 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
         //draw right eye
         //GL.glDrawBuffer(GL_COLOR_ATTACHMENT1); //draw into right color buffer
         shaderProgram.setUniformValue("eyeIndex",0);
-        GL.glViewport( 0, 0,w,debugMode ? h/2 : h );
+        GL.glViewport( 0, 0,w,h );
 
         setCameraPosition(rightCameraPosition);
         shaderProgram.setUniformValue( "V", viewRight );
@@ -282,19 +282,6 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
 
 
 
-        if(debugMode) {
-            GL.glViewport( 0, 0,w, h );
-
-            //blit framebuffer data to screen
-            GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[0]);
-            GL.glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
-            //GLenum status = GL.glGetError();
-            //qDebug() << status;
-            GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-            GL.glBlitFramebuffer(0,0  ,w,h/2,
-            0,h/2,w,h,GL_COLOR_BUFFER_BIT,GL_NEAREST);
-
-        }
 
         //blit framebuffer data to screen
             GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,fbos[1]);
@@ -302,10 +289,48 @@ void ReprojectionErrorRenderer::draw(Scene* s) {
             //GLenum status = GL.glGetError();
             //qDebug() << status;
             GL.glReadBuffer(GL_COLOR_ATTACHMENT0);//right camera
-            GL.glBlitFramebuffer(0,0,w,debugMode ? h/2 : h,
-            0,0,w,debugMode ? h/2 : h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
+            GL.glBlitFramebuffer(0,0,w, h,
+            0,0,w, h, GL_COLOR_BUFFER_BIT,GL_NEAREST);
 
 
 
 }
 
+
+void ReprojectionErrorRenderer::setProjectionMatrix(float fov,float aspect, float near, float far) {
+
+    projection = QMatrix4x4();
+    projection.setToIdentity();
+
+
+
+    qreal radians = (fov ) * M_PI / 180.0f;
+    float eyeSeparation = Configuration::instance().MaxEyeSeparation * normalizedEyeSeparation;
+    float nearWidth =  qTan(radians / 2.0f) * 2.0f * near;
+
+    projection.frustum(-nearWidth/2.0f, nearWidth/2.0f, -nearWidth / (aspect * 2.0f), nearWidth /(aspect * 2.0f), near, far);
+
+    orthoProjection = QMatrix4x4();
+    orthoProjection.setToIdentity();
+    orthoProjection.ortho(-nearWidth/2.0f, nearWidth/2.0f, -nearWidth / (aspect * 2.0f), nearWidth /(aspect * 2.0f), near, far);
+
+
+    //derive left and right eye projection matrices
+    leftProjection = QMatrix4x4();
+    rightProjection = QMatrix4x4();
+    leftProjection = projection;
+    rightProjection = projection;
+
+    /*
+     * set 2n/r-l and r+l/r-l
+     *
+     * */
+    QVector4D firstRowLeft = leftProjection.row(0);
+    QVector4D firstRowRight = rightProjection.row(0);
+    firstRowLeft.setZ(   eyeSeparation /  nearWidth);
+    firstRowRight.setZ(   -eyeSeparation / nearWidth);
+    leftProjection.setRow(0,firstRowLeft);
+    rightProjection.setRow(0,firstRowRight);
+
+    qDebug() << "near plane width: " << nearWidth ;
+}

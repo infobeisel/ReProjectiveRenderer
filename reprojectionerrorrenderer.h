@@ -8,7 +8,7 @@ public:
     ReprojectionErrorRenderer();
     void draw(Scene* s) override;
     QString configTags() override;
-
+    void setProjectionMatrix(float fov,float aspect, float near, float far) override;
 
 };
 
